@@ -7,7 +7,20 @@ from .census_info import read_census_info, get_full_census_tract_id
 
 
 def convert_geometry_to_gps(geometry, orig_projection):
-    """Convert a geometry to GPS coordinates."""
+    """Convert a geometry to GPS coordinates.
+
+    Parameters
+    ----------
+    geometry : GeoJSON
+        The geometry must have type 'Polygon' or 'MultiPolygon'.
+    orig_projection : CRS
+        The original projection that the file is stored in.
+
+    Returns
+    -------
+    shape : a Shapely shape
+        A shape whose points are in GPS units (long, lat)
+    """
     original = pyproj.Proj(orig_projection, preserve_units=True)
     destination = pyproj.Proj(init='epsg:4326')
 
@@ -41,7 +54,7 @@ def convert_geometry_to_gps(geometry, orig_projection):
 
 
 def make_dict_entry(shape_with_props, geometry, orig_projection):
-    """Make a tract entry."""
+    """Make a dictionary to represent a tract or precinct."""
     entry = {
         'shape_orig': shape(geometry),
         'shape_gps': convert_geometry_to_gps(
