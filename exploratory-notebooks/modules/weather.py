@@ -1,3 +1,4 @@
+"""Functions for loading weather data from Dark Sky."""
 import numpy as np
 import pandas as pd
 import csv
@@ -6,6 +7,7 @@ from datetime import datetime as dt
 
 
 def get_precinct_centroids(precinct_dict):
+    """Get the centroid for each precinct."""
     return {
         k: {
             'latitude': v['shape_gps'].centroid.y,
@@ -16,11 +18,13 @@ def get_precinct_centroids(precinct_dict):
 
 
 def get_mean_latlon(centroids):
+    """Get the mean of all the centroids for each district."""
     arr = [[v['latitude'], v['longitude']] for v in centroids.values()]
     return np.mean(arr, axis=0)
 
 
 def read_api_key(keyfile='../precrime_data/darksky_api_key'):
+    """Read the file containing the Dark Sky API key."""
     with open(keyfile, 'r') as f:
         key = f.read().replace('\n', '')
     return key
@@ -32,6 +36,30 @@ def write_weather_data(dates,
                        latlon,
                        append_output=False,
                        filepath='../precrime_data/weather_hist.csv'):
+    """Call the Dark Sky API and save the weather data.
+
+    Parameters
+    ----------
+    dates : list
+        A list of dates (supporting .year, .month, and .day) to
+        download the weather for
+    hours : list
+        A list of integers representing the hours of each day
+        that we want to get the weather for. The total number of forecasts
+        download is len(dates) * len(hours)
+    apikey : string
+        Dark Sky API key
+    latlon : tuple
+        latlon[0] = latitude, latlon[1] = longitude
+    append_output : boolean, optional, default False
+        If True, will not write a header row and will not overwrite the file
+    filepath : string, optional
+        Where to write the output
+
+    Returns
+    -------
+    None
+    """
     if append_output:
         write_header = False
         file_mode = 'a'
@@ -63,6 +91,7 @@ def write_weather_data(dates,
 
 def read_weather_data(filepath='../precrime_data/weather_hist.csv',
                       local_timezone='America/New_York'):
+    """Load in the file of stored historical weather data."""
     weather_hist = pd.read_csv(filepath)
     weather_hist['Local_Datetime'] = pd.to_datetime(
         weather_hist['time'], unit='s'
