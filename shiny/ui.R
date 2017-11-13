@@ -93,8 +93,8 @@ shinyUI(
                                 
                                 #date range
                                 dateRangeInput("Date_Range", "Choose a date range", 
-                                               start = "2015-10-01", end = "2015-12-31", 
-                                               min = "2000-01-01", max = "2015-12-31"),
+                                               start = "2006-01-01", end = "2016-12-31", 
+                                               min = "2006-01-01", max = "2016-12-31"),
                                 
                                 #start and end hour
                                 sliderInput("IntHour", "Start time", 0, 23, 0, step = 1),
@@ -201,7 +201,6 @@ shinyUI(
                                                     'GrandLarcenyAuto', 'CriminalMischief', 'FelonyAssault', 'Forgery', 'Other')))
                   
                 ),
-                box(width = 12,wordcloud2Output("wordcloud", width = "100%", height = "400px")),
                 box(width = 12, plotlyOutput("ggplotly"))
         ),
         

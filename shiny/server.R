@@ -1,6 +1,7 @@
 library(shiny)
 ##################################set work directory#########################
-setwd("/Users/panpancheng/Documents/study/capstone/shiny/crime_v1")
+# This directory can be changed to your working directory
+setwd("")
 
 ##################################load data for crime map####################
 complaint_data<-fread('  ')
