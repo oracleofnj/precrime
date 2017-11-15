@@ -8,23 +8,46 @@
 #
 
 library(shiny)
-states <- geojsonio::geojson_read('/Users/jsamet/precrime/shinymap/us-states.json', what='sp')
-bins <- c(0, 10, 20, 50, 100, 200, 500, 1000, Inf)
+precincts <- geojsonio::geojson_read('nypd_precincts.geojson', what='sp')
+bins <- c(2, 20, 50000, 70000, 100000, 120000, 140000, 180000, 250000)
 pal <- colorBin(
-  'YlOrRd',
-  domain=states$density,
-  bins=bins
+  'viridis',
+  domain=precincts$Population,
+  bins=bins,
+  reverse=T
 )
-m <- leaflet(states) %>% setView(-96,37.8,4) %>% addTiles() %>% addPolygons(
-  fillColor = ~pal(density),
+highlight <- highlightOptions(
+  weight = 5,
+  color = "#666",
+  dashArray = "",
+  fillOpacity = 0.7,
+  bringToFront = TRUE
+)
+labels <- sprintf(
+  paste(
+    "<strong>Precinct %d</strong><br/>",
+    "Population: %s"
+  ),
+  as.integer(precincts$Precinct),
+  format(as.integer(precincts$Population),big.mark=",", trim=TRUE)
+) %>% lapply(htmltools::HTML)
+labelopts <- labelOptions(
+  style = list("font-weight" = "normal", padding = "3px 8px"),
+  textsize = "15px",
+  direction = "auto"
+)
+m <- leaflet(precincts) %>% setView(-74,40.7,11) %>% addTiles() %>% addPolygons(
+  fillColor = ~pal(Population),
   weight=2,
   opacity=1,
   color='white',
   dashArray='3',
-  fillOpacity = 0.7
+  fillOpacity = 0.7,
+  highlight=highlight,
+  label=labels,
+  labelOptions = labelopts
 )
 
-# Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
    
   output$map <- renderLeaflet({

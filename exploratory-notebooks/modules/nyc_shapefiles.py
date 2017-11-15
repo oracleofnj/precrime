@@ -3,6 +3,7 @@
 from shapely.geometry import shape, mapping
 import fiona
 import pyproj
+import json
 from .census_info import read_census_info, get_full_census_tract_id
 
 
@@ -347,5 +348,43 @@ def read_nyc_shapefiles(
     return precinct_dict, tract_dict, merged_census_info
 
 
-def create_feature_collection(shape_dict):
-    pass
+def write_precinct_geojson(
+    shape_dict,
+    destination='../shinymap/nypd_precincts.geojson'
+):
+    """Write the precinct dict out as a geojson file.
+
+    Parameters
+    ----------
+    shape_dict : dict
+        A dict in the format created by read_nyc_shapefiles
+    destination : string
+        The name of the geojson file to create
+
+    Returns
+    -------
+    None
+    """
+    def create_precinct_feature(key, val):
+        feature = {
+            'type': 'Feature',
+            'id': key,
+            'properties': {
+                'Precinct': val['properties']['Precinct'],
+                'Population': val['total_population']
+            },
+            'geometry': mapping(val['shape_gps'])
+        }
+        return feature
+
+    def create_precinct_feature_collection(shape_dict):
+        output_dict = {
+            'type': 'FeatureCollection',
+            'features': [create_precinct_feature(k, v)
+                         for k, v in shape_dict.items()]
+        }
+        return output_dict
+
+    feature_collection = create_precinct_feature_collection(shape_dict)
+    with open(destination, 'w') as f:
+        json.dump(feature_collection, f, indent=2)

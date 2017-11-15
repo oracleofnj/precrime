@@ -13,9 +13,23 @@ library(ggplot2)
 
 # Define UI for application that draws a histogram
 shinyUI(bootstrapPage(
-  tags$style(type = "text/css", "html, body {width:100%;height:100%}"),
+  tags$style(
+    type = "text/css",
+    "
+    #controlPanel {
+      border-style: solid;
+      border-radius: 10px;
+      border-color: #404040;
+      background: rgba(127,127,127,0.5)
+    }
+    html, body {width:100%;height:100%}
+    "
+  ),
   leafletOutput("map", width = "100%", height = "100%"),
-  absolutePanel(top = 10, right = 10,
+  absolutePanel(id='controlPanel',
+                top = 150, left = 10,
+                fixed=T,
+                draggable=T,
                 sliderInput(
                   inputId="range",
                   label="Foo",
