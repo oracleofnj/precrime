@@ -29,6 +29,12 @@ wheels/
 .installed.cfg
 *.egg
 
+# R files
+.RData
+.Rhistory
+.Rproj.user/
+
+
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -103,3 +109,4 @@ ENV/
 
 # mypy
 .mypy_cache/
+.Rproj.user
