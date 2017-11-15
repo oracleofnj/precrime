@@ -8,7 +8,7 @@
 #
 
 library(shiny)
-precincts <- geojsonio::geojson_read('nypd_precincts.geojson', what='sp')
+precincts <- geojsonio::geojson_read('../precrime_data/nypd_precincts.geojson', what='sp')
 bins <- c(2, 20, 50000, 70000, 100000, 120000, 140000, 180000, 250000)
 pal <- colorBin(
   'viridis',
