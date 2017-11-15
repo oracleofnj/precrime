@@ -1,0 +1,110 @@
+[I 18:12:34.754 NotebookApp] The port 8888 is already in use, trying another port.
+[I 18:12:34.755 NotebookApp] The port 8889 is already in use, trying another port.
+[I 18:12:34.756 NotebookApp] The port 8890 is already in use, trying another port.
+[I 18:12:34.757 NotebookApp] The port 8891 is already in use, trying another port.
+[I 18:12:34.757 NotebookApp] The port 8892 is already in use, trying another port.
+[I 18:12:34.773 NotebookApp] Serving notebooks from local directory: /Users/abc/Desktop/fall2017/capstone/precrime
+[I 18:12:34.773 NotebookApp] 0 active kernels 
+[I 18:12:34.773 NotebookApp] The Jupyter Notebook is running at: http://localhost:8939/?token=3c44e411804abcd3f9b80e205d8685cf651bc57228db1aa2
+[I 18:12:34.773 NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[C 18:12:34.774 NotebookApp] 
+    
+    Copy/paste this URL into your browser when you connect for the first time,
+    to login with a token:
+        http://localhost:8939/?token=3c44e411804abcd3f9b80e205d8685cf651bc57228db1aa2
+[I 18:12:34.928 NotebookApp] Accepting one-time-token-authenticated connection from ::1
+[E 18:12:49.407 NotebookApp] Failed to run command:
+    [u'/usr/local/opt/python3/bin/python3.5', u'-m', u'ipykernel', u'-f', u'/Users/abc/Library/Jupyter/runtime/kernel-ac3fbf3c-113e-4773-8134-29fa02b739ce.json']
+        PATH='/Users/abc/anaconda/bin:/usr/local/opt/openssl/bin:/opt/local/bin:/opt/local/sbin:/usr/local/fsl/bin:/Users/abc/anaconda/bin:/opt/local/bin:/opt/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Library/Frameworks/Mono.framework/Versions/Current/Commands'
+        with kwargs:
+    {'cwd': u'/Users/abc/Desktop/fall2017/capstone/precrime/exploratory-notebooks', 'stdin': -1, 'preexec_fn': <function <lambda> at 0x112d0c7d0>, 'stderr': None, 'stdout': None}
+    
+[E 18:12:49.417 NotebookApp] Unhandled error in API request
+    Traceback (most recent call last):
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/notebook/base/handlers.py", line 503, in wrapper
+        result = yield gen.maybe_future(method(self, *args, **kwargs))
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/tornado/gen.py", line 1015, in run
+        value = future.result()
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/tornado/concurrent.py", line 237, in result
+        raise_exc_info(self._exc_info)
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/tornado/gen.py", line 1021, in run
+        yielded = self.gen.throw(*exc_info)
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/notebook/services/sessions/handlers.py", line 75, in post
+        type=mtype))
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/tornado/gen.py", line 1015, in run
+        value = future.result()
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/tornado/concurrent.py", line 237, in result
+        raise_exc_info(self._exc_info)
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/tornado/gen.py", line 1021, in run
+        yielded = self.gen.throw(*exc_info)
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/notebook/services/sessions/sessionmanager.py", line 79, in create_session
+        kernel_id = yield self.start_kernel_for_session(session_id, path, name, type, kernel_name)
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/tornado/gen.py", line 1015, in run
+        value = future.result()
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/tornado/concurrent.py", line 237, in result
+        raise_exc_info(self._exc_info)
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/tornado/gen.py", line 1021, in run
+        yielded = self.gen.throw(*exc_info)
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/notebook/services/sessions/sessionmanager.py", line 92, in start_kernel_for_session
+        self.kernel_manager.start_kernel(path=kernel_path, kernel_name=kernel_name)
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/tornado/gen.py", line 1015, in run
+        value = future.result()
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/tornado/concurrent.py", line 237, in result
+        raise_exc_info(self._exc_info)
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/tornado/gen.py", line 285, in wrapper
+        yielded = next(result)
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/notebook/services/kernels/kernelmanager.py", line 87, in start_kernel
+        super(MappingKernelManager, self).start_kernel(**kwargs)
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/jupyter_client/multikernelmanager.py", line 110, in start_kernel
+        km.start_kernel(**kwargs)
+ [C 09:31:33.637 NotebookApp] received signal 15, stopping
+[I 09:31:44.106 NotebookApp] Shutting down kernels
+[I 09:31:48.017 NotebookApp] Kernel shutdown: 2c689d18-e5b9-436c-b9bb-8a331920a09e
+er_client/manager.py", line 189, in _launch_kernel
+        return launch_kernel(kernel_cmd, **kw)
+      File "/Users/abc/anaconda/lib/python2.7/site-packages/jupyter_client/launcher.py", line 123, in launch_kernel
+        proc = Popen(cmd, **kwargs)
+      File "/Users/abc/anaconda/lib/python2.7/subprocess.py", line 390, in __init__
+        errread, errwrite)
+      File "/Users/abc/anaconda/lib/python2.7/subprocess.py", line 1024, in _execute_child
+        raise child_exception
+    OSError: [Errno 2] No such file or directory
+[E 18:12:49.426 NotebookApp] {
+      "Origin": "http://localhost:8939", 
+      "Content-Length": "129", 
+      "Accept-Language": "en-US,en;q=0.9", 
+      "Accept-Encoding": "gzip, deflate, br", 
+      "X-Xsrftoken": "2|7ea8bdc0|8a7f3ba3d55b9ef9034f9bab91957dc1|1508103611", 
+      "Host": "localhost:8939", 
+      "Accept": "application/json, text/javascript, */*; q=0.01", 
+      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36", 
+      "Connection": "keep-alive", 
+      "X-Requested-With":[C 09:31:33.824 NotebookApp] received signal 15, stopping
+[I 09:31:40.087 NotebookApp] Shutting down kernels
+[I 09:31:43.511 NotebookApp] Kernel shutdown: 29d4af23-fd31-4e20-bd33-68d5c217ca99
+[I 09:31:45.216 NotebookApp] Kernel shutdown: 80366633-7864-4f45-b789-25117c352a59
+[I 09:31:46.468 NotebookApp] Kernel shutdown: 455e9997-68b0-48bf-b204-f9eefc96c61c
+41d9e0f70f2906a5d9e83a04e055ddbc\"; username-localhost-8803=\"2|1:0|10:1508616709|23:username-localhost-8803|44:N2U0NGNkMTYwMGIyNDFkOGExZGI3OTFjYWNmODE1ZjM=|71ec64af0f51ad4a05158cbe091d6419d6c76130545350a880be88b9eb75de11\"; username-localhost-8931=\"2|1:0|10:1508695605|23:username-localhost-8931|44:OTZkMmNhMGY1NDQ3NDk2Mjg4MjBiM2EyOTgxMWZhNTM=|0a9583ecfdf99b9f0589777fab9c70a086140a7db03df40d5816f8bbc967d5a2\"; username-localhost-8888=\"2|1:0|10:1508902448|23:username-localhost-8888|44:N2RmYjhkMWMzM2M2NGZiYWI4M2NkODA1MWZjNzVhNmM=|a23db56d65d2310460ee4263e59a8f6440707701e529fb8fa5ad630cefd6969d\"; username-localhost-8889=\"2|1:0|10:1508946876|23:username-localhost-8889|44:MTA2M2M4NWU1ZTgzNDQ3ODhkODYxY2ZjOTI2ODc4MTc=|e0c9220eb0420fd158467820c66015437d9a781d1b23b75614b859153cc2e2e3\"; username-localhost-8891=\"2|1:0|10:1509116626|23:username-localhost-8891|44:YTk1Y2I1NDY5ODRiNDQ4Y2JlY2I5ZmVlZGI3YzJjYmQ=|4c0deb087fc7093faa2628f8050a1bef1babd7b88fdb59194b741503b94acaf9\"; username-localhost-8890=\"2|1:0|10:1509116626|23:username-localhost-8890|44:MTNjN2MzMGUxYTZiNDVjZTg4OGNlYjlkN2I1YmZjZDk=|fab761cc2e05f7e27086815371de290be03482415d42fd51326e632e655341d0\"; username-localhost-8892=\"2|1:0|10:1509213272|23:username-localhost-8892|44:MzU1ZTE0ZGE4YzQyNDQ5M2IzYWNiYjg0ODg5NGRlNmE=|d496710bb012de6d9583b17cd9cb259c281c24aba4fb100b207fee6bc376ba5f\"; username-localhost-8799=\"2|1:0|10:1509214118|23:username-localhost-8799|44:M2I3NzAwZWY1NGNiNGRiZGI5ZTg2NjcxYjM5YmViNDI=|a99fd686afb9b116a155d5a12c55434a79b3e37d09efc8cd8222b4b2d2969694\"; username-localhost-8937=\"2|1:0|10:1509219926|23:username-localhost-8937|44:OWNmOWRmZTMxZmEzNDM0ZGE4MjhiYWY3NTU3OGZmN2M=|ec1b6cb4737e02f2b102fec8a6339e4f25cf34876ba6c11a06f305e506790346\"; username-localhost-8969=\"2|1:0|10:1509224627|23:username-localhost-8969|44:MmExNmU4NzRjZjA3NGY0ZGE5YWY4YjhkNWMzYzQ5YmM=|2d4686c39726312325bb62197cb35eae48630b93f2851c8b40d990c8772c3112\"; username-localhost-8835=\"2|1:0|10:1509244701|23:username-localhost-8835|44:NWQ1NWZkYWI2ZmJmNDlmZmJhZDY4Zjc4ZjYyOTQ2ZjU=|d53f88ac26c410766a7b7980ee3c4800a4d476055f70f1ec5ec9f5c9af85f6a0\"; username-localhost-8868=\"2|1:0|10:1509262431|23:username-localhost-8868|44:MzQ4ZDEyOWQ0ZmRhNDM0MWEzZDVjYzY5NTAwYmVmNTg=|2642d1966900b88c8fa3d53e8f8feaa030a1e5c9309ab15e3f2567561d510bb9\"; username-localhost-8859=\"2|1:0|10:1509262434|23:username-localhost-8859|44:OWEzNTU0ODE4MjFjNGExOGIyNDk0ZDI2NDg5M2NkMDA=|d70f2e3c3193c5efccf2582cdc1ef2f9a845cf8f6d94c864567b0a95502c99c0\"; username-localhost-8899=\"2|1:0|10:1509310960|23:username-localhost-8899|44:MDI2ODkwYmU2ZGRkNGIxMjk5MWM0YzNmMjlhNWYzZDI=|b2c4566c4922bc7cce3cea19a41b949eacd1589a07cf5f52cfdf864dd88c6a0d\"; username-localhost-8980=\"2|1:0|10:1509400064|23:username-localhost-8980|44:Mjg2YWZlMjRiNGE2NDcyNDgwMjI5YTQ1MjU5ZGJiZjc=|63b5f5ef2a5edc1b81d4512318df8fda49c51c5e80334bb5951dc24dc122481d\"; username-localhost-8944=\"2|1:0|10:1509657345|23:username-localhost-8944|44:ZDMyMDYzZjA4ODJlNDJlM2FkZmIxOWU2YjA1YTU0ZTE=|1a2c9886c7ae7a21d8ac5dd4c1365cc2327198f007f48c1066717ed6fcaecb2b\"; username-localhost-8804=\"2|1:0|10:1509718070|23:username-localhost-8804|44:YTIzMDBhY2M4MGM5NDMwOTk5MzBkYjc0YjhlZTY2ODM=|d75e3c90915fb058289536a71e990e4b02a17d0f1353c76b587ad33e92fe82b6\"; username-localhost-8990=\"2|1:0|10:1509731145|23:username-localhost-8990|44:MTcwMWU1YmE3MjhlNGQ3NmE2MTBkNDI3Y2JhYWViMTY=|197e9f6bededf0c8eb4886a56a0308ea84a1cfe525bc27387c2781231fc7171a\"; username-localhost-8966=\"2|1:0|10:1509748557|23:username-localhost-8966|44:MGJiNjY4YWRkODAxNGE3NjlmMWQ2NWM4OTc0OTMwNzQ=|96055108299929f811c4e2d99ad90df5563aa555e6c9308157001d5f6aa8690c\"; username-localhost-8975=\"2|1:0|10:1509751694|23:username-localhost-8975|44:OTYxODY1NmM3ZmU1NDg0OGFiNDQ1ZjY2ZWNjZjAxODY=|4c2d77005009245a9e3c1ae5e33ffb171eca16695d95aa4a2d6be158783b057c\"; username-localhost-8866=\"2|1:0|10:1509933881|23:username-localhost-8866|44:OTEyMjM0ODI4N2Q3NGNiNDgyNTQzZDI2OGViMDcyMzY=|e62653210f5cdb34efcc3c4548b6634f9f3fe2c61b58f0d9a78ba1b8e9620769\"; username-localhost-8854=\"2|1:0|10:1510069173|23:username-localhost-8854|44:M2NiZWJmZWMxNjA0NGJiZGE1ZGMyYjEyOTUzYzM5NWU=|7c8f5023b1b0ab2520d37a57200d16c8a3343cc70c44a7966c1967cdd8ad72b8\"; username-localhost-8950=\"2|1:0|10:1510096211|23:username-localhost-8950|44:NGZmYjIxYzRjY2M1NGIxZDljZDZmZmU2NjNiNTc0OWM=|62581300fa15939232c769f118b5e41b2c88f888b884dddf82547ab4013f5d48\"; username-localhost-8939=\"2|1:0|10:1510096354|23:username-localhost-8939|44:NTNkNTNkM2I3NjlhNDkzNzk5OWQyMTA3NDc0NmUzNDI=|e0b7c281c06fdef5890e76f15b980ade83dc0c71badf3c4a7f9a2ba75fc19576\"", 
+      "Content-Type": "application/json"
+    }
+[E 18:12:49.427 NotebookApp] 500 POST /api/sessions (::1) 114.15ms referer=http://localhost:8939/notebooks/exploratory-notebooks/InitialExploration-Copy1.ipynb
+[I 18:13:41.188 NotebookApp] Creating new notebook in /exploratory-notebooks
+[I 18:13:42.835 NotebookApp] Kernel started: 0b11ec54-a8e8-435d-b58b-d8967538ff80
+[I 18:15:43.030 NotebookApp] Saving file at /exploratory-notebooks/Untitled1.ipynb
+[I 18:17:42.829 NotebookApp] Saving file at /exploratory-notebooks/ts-model.ipynb
+[I 18:25:42.804 NotebookApp] Saving file at /exploratory-notebooks/ts-model.ipynb
+[I 18:53:42.744 NotebookApp] Saving file at /exploratory-notebooks/ts-model.ipynb
+[I 19:03:42.725 NotebookApp] Saving file at /exploratory-notebooks/ts-model.ipynb
+[I 19:05:42.723 NotebookApp] Saving file at /exploratory-notebooks/ts-model.ipynb
+[I 19:07:42.716 NotebookApp] Saving file at /exploratory-notebooks/ts-model.ipynb
+[I 19:41:42.647 NotebookApp] Saving file at /exploratory-notebooks/ts-model.ipynb
+[I 19:43:42.646 NotebookApp] Saving file at /exploratory-notebooks/ts-model.ipynb
+[I 19:45:42.640 NotebookApp] Saving file at /exploratory-notebooks/ts-model.ipynb
+[I 19:59:42.611 NotebookApp] Saving file at /exploratory-notebooks/ts-model.ipynb
+[I 22:07:42.369 NotebookApp] Saving file at /exploratory-notebooks/ts-model.ipynb
+[I 22:17:42.353 NotebookApp] Saving file at /exploratory-notebooks/ts-model.ipynb
+[C 09:31:30.616 NotebookApp] received signal 15, stopping
+[I 09:31:34.385 NotebookApp] Shutting down kernels
+[I 09:31:38.353 NotebookApp] Kernel shutdown: 0b11ec54-a8e8-435d-b58b-d8967538ff80
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              [C 09:31:36.520 NotebookApp] received signal 15, stopping
+[I 09:31:47.167 NotebookApp] Shutting down kernels

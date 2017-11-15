@@ -1,0 +1,53 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+library(readr)
+library(viridis)
+library(RColorBrewer)
+library(gridExtra)
+```
+
+```{r}
+nypd <- read_csv("/Users/abc/Desktop/fall2017/capstone/precrime/exploratory-notebooks/crime_nypd.csv", col_types = cols(Date = col_date(format = "%m/%d/%Y"), Time = col_character()))
+
+```
+
+```{r}
+library(ggmap)
+mapNY <- get_map(location = c(lon=median(nypd$Longitude, na.rm=TRUE),lat=median(nypd$Latitude, na.rm=TRUE)), zoom = 12, maptype = "roadmap", scale = 2)
+```
+
+
+```{r, fig.height=15, fig.width=15}
+
+#mapSF_1 <- get_map(location = 'San Francisco', zoom = 13, maptype = "roadmap", scale = 2)
+# plotting the map with some points on it
+p<-ggmap(mapNY) + geom_density2d(data = nypd, 
+    aes(x = Longitude , y = Latitude), size = 0.3) + stat_density2d(data = nypd, 
+    aes(x = Longitude, y = Latitude, fill = ..level.., alpha = ..level..), size = 0.01, 
+    bins = 100, geom = "polygon") + scale_fill_viridis(direction=-1) + facet_wrap(~OFFENSE)+ 
+    scale_alpha(range = c(0.05, 0.3), guide = FALSE) + ggtitle('Crime Density and Subway Stops')+theme(legend.position="bottom") 
+p+geom_point(data=subway, aes(x=Longitude, y=Latitude),color="red", alpha=0.4, size=0.5 ) + theme(text = element_text(size=20) ,  legend.direction='vertical')
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+```{r, fig.height=10, fig.width=10}
+nypd$Year=format(nypd$COMPLAINT_DATETIME,"%Y")
+nypd$Month=format(nypd$COMPLAINT_DATETIME,"%m")
+
+ts <- nypd %>% group_by(OFFENSE,Month) %>% summarise(count1=n())
+ggplot(ts)+geom_col(mapping=aes(Month,count1)) +ylab("Count")+ facet_wrap(~OFFENSE) +ggtitle("Monthly Distribution of Crimes") +theme(text = element_text(size=20), axis.text=element_text(size=10) )
+```
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).

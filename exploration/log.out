@@ -1,0 +1,32 @@
+[I 14:06:43.047 NotebookApp] The port 8888 is already in use, trying another port.
+[I 14:06:43.051 NotebookApp] The port 8889 is already in use, trying another port.
+[I 14:06:43.054 NotebookApp] The port 8890 is already in use, trying another port.
+[I 14:06:43.057 NotebookApp] The port 8891 is already in use, trying another port.
+[I 14:06:43.059 NotebookApp] The port 8892 is already in use, trying another port.
+[I 14:06:43.178 NotebookApp] Serving notebooks from local directory: /Users/abc/Desktop/fall2017/capstone/precrime/exploration
+[I 14:06:43.178 NotebookApp] 0 active kernels 
+[I 14:06:43.179 NotebookApp] The Jupyter Notebook is running at: http://localhost:8931/?token=f5e33654096454ddc2f29e48abd68bf33088849deae43dd2
+[I 14:06:43.179 NotebookApp] Use Control-C to stop this server and shut down all kernels (twice to skip confirmation).
+[C 14:06:43.201 NotebookApp] 
+    
+    Copy/paste this URL into your browser when you connect for the first time,
+    to login with a token:
+        http://localhost:8931/?token=f5e33654096454ddc2f29e48abd68bf33088849deae43dd2
+[I 14:06:45.418 NotebookApp] Accepting one-time-token-authenticated connection from ::1
+[I 17:55:10.568 NotebookApp] Kernel started: bfab9e56-2dcf-4331-b4cb-f5f550079db3
+[W 17:55:22.966 NotebookApp] Timeout waiting for kernel_info reply from bfab9e56-2dcf-4331-b4cb-f5f550079db3
+[I 18:29:07.062 NotebookApp] Saving file at /data_viz.ipynb
+[I 18:30:44.666 NotebookApp] Kernel restarted: bfab9e56-2dcf-4331-b4cb-f5f550079db3
+[I 18:31:07.060 NotebookApp] Saving file at /data_viz.ipynb
+[I 18:33:07.083 NotebookApp] Saving file at /data_viz.ipynb
+[I 18:35:07.370 NotebookApp] Saving file at /data_viz.ipynb
+[I 18:37:07.054 NotebookApp] Saving file at /data_viz.ipynb
+[I 18:39:07.083 NotebookApp] Saving file at /data_viz.ipynb
+[I 18:47:07.011 NotebookApp] Saving file at /data_viz.ipynb
+[I 18:49:07.031 NotebookApp] Saving file at /data_viz.ipynb
+[I 18:59:06.963 NotebookApp] Saving file at /data_viz.ipynb
+[I 19:37:08.701 NotebookApp] Saving file at /data_viz.ipynb
+[I 19:39:07.258 NotebookApp] Saving file at /data_viz.ipynb
+[C 02:26:42.414 NotebookApp] received signal 15, stopping
+[I 02:26:44.457 NotebookApp] Shutting down kernels
+[I 02:26:49.019 NotebookApp] Kernel shutdown: bfab9e56-2dcf-4331-b4cb-f5f550079db3
