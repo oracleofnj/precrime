@@ -1,6 +1,6 @@
 """Functions for working with NYC shapefiles."""
 
-from shapely.geometry import shape
+from shapely.geometry import shape, mapping
 import fiona
 import pyproj
 from .census_info import read_census_info, get_full_census_tract_id
@@ -345,3 +345,7 @@ def read_nyc_shapefiles(
         )
 
     return precinct_dict, tract_dict, merged_census_info
+
+
+def create_feature_collection(shape_dict):
+    pass
