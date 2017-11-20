@@ -264,3 +264,58 @@ def add_offense_category(df):
         'Fraud', 'Forgery', 'Arson', 'Drugs',
         'Weapons', 'CriminalMischief', 'Other'
     ], inplace=True)
+
+
+def add_datetime_columns(nypd_data):
+    """Add datetime columns to the data."""
+    nypd_data['COMPLAINT_YEAR'] = nypd_data['COMPLAINT_DATETIME'].dt.year
+    nypd_data['COMPLAINT_MONTH'] = nypd_data['COMPLAINT_DATETIME'].dt.month
+    nypd_data['COMPLAINT_DAY'] = nypd_data['COMPLAINT_DATETIME'].dt.day
+    nypd_data['COMPLAINT_HOUR'] = nypd_data['COMPLAINT_DATETIME'].dt.hour
+    nypd_data['COMPLAINT_DAYOFWEEK'] = \
+        nypd_data['COMPLAINT_DATETIME'].dt.dayofweek
+    nypd_data['COMPLAINT_HOURGROUP'] = nypd_data['COMPLAINT_HOUR'].map(
+        lambda x: 4 * (int(x) // 4)
+    )
+
+
+def save_pivoted_felonies(nypd_data, data_path=None, pivot_file=None):
+    """Pivot the data and write the pivot table out to disk."""
+    pivot_file_defaults = {
+        'data_path': '../precrime_data/',
+        'pivot_file': 'felonies_pivoted.csv',
+    }
+    if data_path is None:
+        data_path = pivot_file_defaults['data_path']
+    if pivot_file is None:
+        pivot_file = pivot_file_defaults['pivot_file']
+    pivoted = nypd_data.pivot_table(
+        index=[
+            nypd_data['COMPLAINT_YEAR'],
+            nypd_data['COMPLAINT_MONTH'],
+            nypd_data['COMPLAINT_DAY'],
+            nypd_data['COMPLAINT_HOURGROUP'],
+            'ADDR_PCT_CD',   # These are not duplicated across boros.
+        ],
+        values='KY_CD',
+        columns='OFFENSE',
+        fill_value=0,
+        aggfunc=len
+    )
+    pivoted.to_csv(data_path + pivot_file)
+
+
+def load_pivoted_felonies(data_path=None, pivot_file=None):
+    pivot_file_defaults = {
+        'data_path': '../precrime_data/',
+        'pivot_file': 'felonies_pivoted.csv',
+    }
+    if data_path is None:
+        data_path = pivot_file_defaults['data_path']
+    if pivot_file is None:
+        pivot_file = pivot_file_defaults['pivot_file']
+    pivoted = pd.read_csv(
+        data_path + pivot_file,
+        index_col=[0, 1, 2, 3, 4]
+    )
+    return pivoted
