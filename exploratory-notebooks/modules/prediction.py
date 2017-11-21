@@ -1,5 +1,7 @@
 """Functions to make crime predictions."""
+import numpy as np
 import pandas as pd
+import datetime
 from .weather import load_weather_data
 from .nypd_data import load_pivoted_felonies
 from .nyc_shapefiles import load_census_info
@@ -109,3 +111,78 @@ def precrime_train_test_split(merged_data, test_times):
     X_train, y_train = split_into_X_y(train_data)
     X_test, y_test = split_into_X_y(test_data)
     return X_train, X_test, y_train, y_test
+
+
+def create_test_period(first_date, last_date):
+    """Create a DataFrame covering a specific period of time."""
+    one_day = datetime.timedelta(days=1)
+    dates_in_dataset = []
+    d = first_date
+    while d < last_date:
+        dates_in_dataset.append(d)
+        d += one_day
+    hourgroups = range(0, 24, 4)
+    test_times = pd.DataFrame(index=pd.MultiIndex.from_product(
+        [sorted(dates_in_dataset), sorted(hourgroups)],
+    ))
+    test_times['TEST_YEAR'] = test_times.index.get_level_values(0).year
+    test_times['TEST_MONTH'] = test_times.index.get_level_values(0).month
+    test_times['TEST_DAY'] = test_times.index.get_level_values(0).day
+    test_times['TEST_HOURGROUP'] = test_times.index.get_level_values(1)
+    test_times.reset_index(inplace=True)
+    return test_times[[
+        'TEST_YEAR', 'TEST_MONTH', 'TEST_DAY', 'TEST_HOURGROUP'
+    ]]
+
+
+def create_test_quarter(year, quarter):
+    """Create a test mask for use with split_by_datetime.
+
+    Parameters
+    ----------
+    year : integer
+    quarter : integer from 1 to 4
+
+    Returns
+    -------
+    test_times : DataFrame
+        A DataFrame with columns 'TEST_YEAR', 'TEST_MONTH',
+        'TEST_DAY', and 'TEST_HOURGROUP'
+    """
+    first_date = datetime.date(year, 3 * (quarter-1) + 1, 1)
+    if quarter == 4:
+        last_date = datetime.date(year+1, 1, 1)
+    else:
+        last_date = datetime.date(year, 3 * quarter + 1, 1)
+    return create_test_period(first_date, last_date)
+
+
+def create_finegrained_split(frac=0.1, random_state=4800):
+    """Return a random 10% of the data as a test mask."""
+    first_date = datetime.date(2006, 1, 2)
+    last_date = datetime.date(2017, 1, 1)
+    test_times = create_test_period(first_date, last_date)
+    return test_times.sample(frac=frac, random_state=random_state)
+
+
+def create_coarsegrained_split(n=5, random_state=4800):
+    """Return a random 5 quarters as a test mask."""
+    quarters = np.array([
+        [year, quarter]
+        for year in range(2006, 2017)
+        for quarter in range(1, 5)
+    ])
+    if random_state is not None:
+        np.random.seed(random_state)
+    test_quarters = np.random.choice(len(quarters), size=n, replace=False)
+    test_times = create_test_quarter(
+        quarters[test_quarters[0], 0], quarters[test_quarters[0], 1]
+    )
+    for i in range(1, n):
+        test_times = test_times.append(
+            create_test_quarter(
+                quarters[test_quarters[i], 0], quarters[test_quarters[i], 1]
+            ),
+            ignore_index=True
+        )
+    return test_times
