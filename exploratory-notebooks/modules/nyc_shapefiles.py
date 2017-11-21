@@ -468,6 +468,16 @@ def save_census_info(precinct_df, tract_df, intersection_df,
     )
 
 
+def load_census_info(filepath='../precrime_data/'):
+    """Load the three dataframes from CSV."""
+    precinct_df = pd.read_csv(filepath + 'precinct_info.csv')
+    tract_df = pd.read_csv(filepath + 'tract_info.csv')
+    intersection_df = pd.read_csv(
+        filepath + 'tract_precinct_intersection_info.csv'
+    )
+    return precinct_df, tract_df, intersection_df
+
+
 def write_precinct_geojson(
     shape_dict,
     destination='../shinymap/nypd_precincts.geojson'

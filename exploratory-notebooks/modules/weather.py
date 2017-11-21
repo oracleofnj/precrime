@@ -98,3 +98,24 @@ def read_weather_data(filepath='../precrime_data/weather_hist.csv',
     ).dt.tz_localize('UTC').dt.tz_convert(local_timezone)
     weather_hist.set_index('Local_Datetime', inplace=True)
     return weather_hist
+
+
+def add_hourgroups(weather_hist):
+    """Add datetime columns to the data."""
+    weather_hist['WEATHER_YEAR'] = weather_hist.index.year
+    weather_hist['WEATHER_MONTH'] = weather_hist.index.month
+    weather_hist['WEATHER_DAY'] = weather_hist.index.day
+    weather_hist['WEATHER_HOUR'] = weather_hist.index.hour
+    weather_hist['WEATHER_DAYOFWEEK'] = \
+        weather_hist.index.dayofweek
+    weather_hist['WEATHER_HOURGROUP'] = weather_hist['WEATHER_HOUR'].map(
+        lambda x: 4 * (int(x) // 4)
+    )
+
+
+def load_weather_data(filepath='../precrime_data/weather_hist.csv',
+                      local_timezone='America/New_York'):
+    """Load in the file of stored weather data and add hourgroups."""
+    weather_hist = read_weather_data(filepath, local_timezone)
+    add_hourgroups(weather_hist)
+    return weather_hist
