@@ -1,6 +1,8 @@
 """Functions for processing the core dataset."""
 import numpy as np
 import pandas as pd
+import datetime
+import csv
 from time import localtime, strftime
 from collections import defaultdict
 
@@ -277,18 +279,12 @@ def add_datetime_columns(nypd_data):
     nypd_data['COMPLAINT_HOURGROUP'] = nypd_data['COMPLAINT_HOUR'].map(
         lambda x: 4 * (int(x) // 4)
     )
+    nypd_data['COMPLAINT_ID'] = nypd_data.index.values
 
 
-def save_pivoted_felonies(nypd_data, data_path=None, pivot_file=None):
-    """Pivot the data and write the pivot table out to disk."""
-    pivot_file_defaults = {
-        'data_path': '../precrime_data/',
-        'pivot_file': 'felonies_pivoted.csv',
-    }
-    if data_path is None:
-        data_path = pivot_file_defaults['data_path']
-    if pivot_file is None:
-        pivot_file = pivot_file_defaults['pivot_file']
+def pivot_felonies(nypd_data):
+    """Pivot the data and aggregate it in a useful way."""
+    # First we pivot the data to sum up offenses by category.
     pivoted = nypd_data.pivot_table(
         index=[
             nypd_data['COMPLAINT_YEAR'],
@@ -302,13 +298,86 @@ def save_pivoted_felonies(nypd_data, data_path=None, pivot_file=None):
         fill_value=0,
         aggfunc=len
     )
-    pivoted.to_csv(data_path + pivot_file)
+    # Unfortunately, the resulting pivot table has rows for dates that don't
+    # actually exist since it uses the cross product of years and months,
+    # resulting in rows for nonexistent dates like February 30th.
+    #
+    # To fix this, we create an empty dataframe with the correct values in the
+    # index, and then merge the two dataframes.
+    first_time = nypd_data['COMPLAINT_DATETIME'].min()
+    first_date = datetime.date(
+        first_time.year,
+        first_time.month,
+        first_time.day
+    )
+    last_time = nypd_data['COMPLAINT_DATETIME'].max()
+    last_date = datetime.date(
+        last_time.year,
+        last_time.month,
+        last_time.day
+    )
+    one_day = datetime.timedelta(days=1)
+    dates_in_dataset = []
+    d = first_date
+    while d <= last_date:
+        dates_in_dataset.append(d)
+        d += one_day
+    hourgroups = nypd_data['COMPLAINT_HOURGROUP'].unique()
+    precinct_codes = nypd_data['ADDR_PCT_CD'].unique()
+    # The cross-product of days, hourgroups, and precincts is what we want.
+    # We make an empty dataframe with the correct index,
+    # get the year/month/day back out, and then reset the index.
+    empty_df = pd.DataFrame(index=pd.MultiIndex.from_product(
+        [sorted(dates_in_dataset), sorted(hourgroups), sorted(precinct_codes)],
+        names=[u'date', u'COMPLAINT_HOURGROUP', u'ADDR_PCT_CD']
+    ))
+    empty_df['COMPLAINT_YEAR'] = empty_df.index.get_level_values(0).year
+    empty_df['COMPLAINT_MONTH'] = empty_df.index.get_level_values(0).month
+    empty_df['COMPLAINT_DAY'] = empty_df.index.get_level_values(0).day
+    empty_df['COMPLAINT_HOURGROUP'] = empty_df.index.get_level_values(1)
+    empty_df['ADDR_PCT_CD'] = empty_df.index.get_level_values(2)
+    empty_df['COMPLAINT_DAYOFWEEK'] = \
+        empty_df.index.get_level_values(0).dayofweek
+    empty_df.set_index([
+            'COMPLAINT_YEAR', 'COMPLAINT_MONTH', 'COMPLAINT_DAY',
+            'COMPLAINT_HOURGROUP', 'ADDR_PCT_CD'
+        ],
+        inplace=True
+    )
+    correct_pivots = empty_df.merge(
+        pivoted,
+        how='left', left_index=True, right_index=True
+    )
+    # Finally, add in the complaint IDs so we can cross reference vs
+    # the original table if desired.
+    correct_pivots['COMPLAINT_IDS'] = nypd_data.groupby([
+        'COMPLAINT_YEAR', 'COMPLAINT_MONTH', 'COMPLAINT_DAY',
+        'COMPLAINT_HOURGROUP', 'ADDR_PCT_CD']
+    )['COMPLAINT_ID'].agg(lambda x: ' '.join([str(i) for i in x]))
+    correct_pivots['COMPLAINT_IDS'] = \
+        correct_pivots['COMPLAINT_IDS'].fillna(value='')
+    return correct_pivots
+
+
+def save_pivoted_felonies(nypd_data, data_path=None, pivot_file=None):
+    """Pivot the data and write the pivot table out to disk."""
+    pivot_file_defaults = {
+        'data_path': '../precrime_data/',
+        'pivot_file': 'pivoted_felonies.csv',
+    }
+    if data_path is None:
+        data_path = pivot_file_defaults['data_path']
+    if pivot_file is None:
+        pivot_file = pivot_file_defaults['pivot_file']
+    pivoted = pivot_felonies(nypd_data)
+    pivoted.to_csv(data_path + pivot_file, quoting=csv.QUOTE_NONNUMERIC)
 
 
 def load_pivoted_felonies(data_path=None, pivot_file=None):
+    """Load the saved, pivoted data."""
     pivot_file_defaults = {
         'data_path': '../precrime_data/',
-        'pivot_file': 'felonies_pivoted.csv',
+        'pivot_file': 'pivoted_felonies.csv',
     }
     if data_path is None:
         data_path = pivot_file_defaults['data_path']
@@ -318,4 +387,5 @@ def load_pivoted_felonies(data_path=None, pivot_file=None):
         data_path + pivot_file,
         index_col=[0, 1, 2, 3, 4]
     )
+    pivoted['COMPLAINT_IDS'] = pivoted['COMPLAINT_IDS'].fillna(value='')
     return pivoted
