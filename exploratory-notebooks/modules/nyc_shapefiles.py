@@ -4,6 +4,7 @@ from shapely.geometry import shape, mapping
 import fiona
 import pyproj
 import json
+import csv
 import numpy as np
 import pandas as pd
 from .census_info import read_census_info, get_full_census_tract_id
@@ -452,6 +453,19 @@ def create_dataframes(precinct_dict, tract_dict, merged_census_info):
     add_weighted_average('Percent_Bachelors_Degree')
 
     return precinct_df, tract_df, intersection_df
+
+
+def save_census_info(precinct_df, tract_df, intersection_df,
+                     output_path='../precrime_data/'):
+    """Save the dataframes as CSV."""
+    precinct_df.to_csv(output_path + 'precinct_info.csv',
+                       quoting=csv.QUOTE_NONNUMERIC)
+    tract_df.to_csv(output_path + 'tract_info.csv',
+                    quoting=csv.QUOTE_NONNUMERIC)
+    intersection_df.to_csv(
+        output_path + 'tract_precinct_intersection_info.csv',
+        quoting=csv.QUOTE_NONNUMERIC
+    )
 
 
 def write_precinct_geojson(
