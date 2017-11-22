@@ -285,10 +285,6 @@ def read_nyc_shapefiles(
         'Median_Household_Income': The median household income
         'Percent_Bachelors_Degree': The percent of the population with
             a bachelors degree or above
-
-    tract_df : DataFrame
-        A Pandas DataFrame with the same information as merged_census_info,
-        but whose index is the same arbitrary ID as for tract_dict.
     """
     merged_census_info = read_census_info(census_path)
     precincts = fiona.open(shapefile_path + 'police_precincts/nypp.shp')
