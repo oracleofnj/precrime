@@ -4,6 +4,9 @@ from shapely.geometry import shape, mapping
 import fiona
 import pyproj
 import json
+import csv
+import numpy as np
+import pandas as pd
 from .census_info import read_census_info, get_full_census_tract_id
 
 
@@ -346,6 +349,129 @@ def read_nyc_shapefiles(
         )
 
     return precinct_dict, tract_dict, merged_census_info
+
+
+def create_dataframes(precinct_dict, tract_dict, merged_census_info):
+    """Load the info from the NYC-provided shapefiles.
+
+    Parameters
+    ----------
+    precinct_dict : dict
+        A dictionary of police precincts along with information about the
+        precinct compiled from the shapefile and from the census info.
+        Should be in the format returned by read_nyc_shapefiles().
+
+    tract_dict : dict
+        A dictionary of census tracts along with information about the tract
+        compiled from the shapefile and from the census info.
+        Should be in the format returned by read_nyc_shapefiles().
+
+    merged_census_info : DataFrame
+        Should be in the format returned by read_nyc_shapefiles().
+
+    Returns
+    -------
+    precinct_df : DataFrame
+        A Pandas Dataframe with information aggregated from the census tracts.
+        Contains the total population, the weighted average median household
+        income, and the weighted average percent with bachelors degree.
+
+    tract_df : DataFrame
+        A Pandas DataFrame with the same information as merged_census_info,
+        but whose index is the same arbitrary ID as for tract_dict.
+
+    intersection_df : DataFrame
+        A Pandas DataFrame with the intersections of census tracts
+        and police precincts.
+    """
+    def weighted_average(x):
+        return np.average(
+            x,
+            weights=intersection_df.loc[x.index, 'TractPopulationInPrecinct']
+        )
+
+    def add_weighted_average(column_name):
+        precinct_df[column_name] = \
+            intersection_df.dropna(
+                subset=[column_name]
+            ).groupby(
+                'Precinct'
+            ).agg(
+                {column_name: weighted_average}
+            )
+
+    empty_tract_df = pd.DataFrame.from_dict(
+        {k: v['census_info'].name
+         for k, v in tract_dict.items()},
+        orient='index')
+    empty_tract_df.columns = [merged_census_info.index.name]
+    tract_df = empty_tract_df.merge(
+        merged_census_info,
+        left_on=merged_census_info.index.name,
+        right_index=True
+    )
+    tract_df.index.rename('TractShapefileID', inplace=True)
+
+    empty_intersection_df = pd.DataFrame.from_records([
+        (
+            precinct_entry['properties']['Precinct'],
+            tract_id,
+            tract_entry['population_assigned_to_precinct'],
+            tract_entry['population_percent_of_precinct']
+        )
+        for precinct_entry in precinct_dict.values()
+        for tract_id, tract_entry in precinct_entry['intersections'].items()],
+        columns=[
+            'Precinct',
+            'TractShapefileId',
+            'TractPopulationInPrecinct',
+            'PopulationPercentOfPrecinct'
+        ]
+    )
+    intersection_df = empty_intersection_df.merge(
+        tract_df,
+        left_on='TractShapefileId',
+        right_index=True
+    )
+
+    precinct_df = pd.DataFrame.from_dict(
+        {v['properties']['Precinct']: k
+         for k, v in precinct_dict.items()},
+        orient='index'
+    )
+    precinct_df.columns = ['PrecinctShapefileID']
+    precinct_df.index.rename('Precinct', inplace=True)
+    precinct_df['Population'] = pd.Series(
+        {entry['properties']['Precinct']: entry['total_population']
+         for entry in precinct_dict.values()}
+    )
+    add_weighted_average('Median_Household_Income')
+    add_weighted_average('Percent_Bachelors_Degree')
+
+    return precinct_df, tract_df, intersection_df
+
+
+def save_census_info(precinct_df, tract_df, intersection_df,
+                     output_path='../precrime_data/'):
+    """Save the dataframes as CSV."""
+    precinct_df.to_csv(output_path + 'precinct_info.csv',
+                       quoting=csv.QUOTE_NONNUMERIC)
+    tract_df.to_csv(output_path + 'tract_info.csv',
+                    quoting=csv.QUOTE_NONNUMERIC)
+    intersection_df.to_csv(
+        output_path + 'tract_precinct_intersection_info.csv',
+        quoting=csv.QUOTE_NONNUMERIC
+    )
+
+
+def load_census_info(filepath='../precrime_data/'):
+    """Load the three dataframes from CSV."""
+    precinct_df = pd.read_csv(filepath + 'precinct_info.csv')
+    tract_df = pd.read_csv(filepath + 'tract_info.csv')
+    intersection_df = pd.read_csv(
+        filepath + 'tract_precinct_intersection_info.csv'
+    )
+    return precinct_df, tract_df, intersection_df
 
 
 def write_precinct_geojson(

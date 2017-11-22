@@ -8,6 +8,7 @@ __pycache__/
 
 # Data files
 precrime_data/
+model_predictions/
 .DS_Store
 
 # Distribution / packaging
