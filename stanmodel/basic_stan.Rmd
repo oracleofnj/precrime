@@ -1,0 +1,99 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+```{r}
+library("rstan") # observe startup messages
+rstan_options(auto_write = TRUE)
+options(mc.cores = parallel::detectCores())
+```
+
+```{r}
+schools_dat <- list(J = 8, 
+                    y = c(28,  8, -3,  7, -1,  1, 18, 12),
+                    sigma = c(15, 10, 16, 11,  9, 11, 10, 18))
+
+```
+
+```{r}
+# data {
+#   int<lower=0> J; // number of schools 
+#   real y[J]; // estimated treatment effects
+#   real<lower=0> sigma[J]; // s.e. of effect estimates 
+# }
+# parameters {
+#   real mu; 
+#   real<lower=0> tau;
+#   real eta[J];
+# }
+# transformed parameters {
+#   real theta[J];
+#   for (j in 1:J)
+#     theta[j] = mu + tau * eta[j];
+# }
+# model {
+#   target += normal_lpdf(eta | 0, 1);
+#   target += normal_lpdf(y | theta, sigma);
+# }
+fit <- stan(file = '8schools.stan', data = schools_dat, 
+            iter = 1000, chains = 4)
+
+```
+
+```{r}
+print(fit)
+plot(fit)
+pairs(fit, pars = c("mu", "tau", "lp__"))
+
+la <- extract(fit, permuted = TRUE) # return a list of arrays 
+mu <- la$mu 
+
+### return an array of three dimensions: iterations, chains, parameters 
+a <- extract(fit, permuted = FALSE) 
+
+### use S3 functions as.array (or as.matrix) on stanfit objects
+a2 <- as.array(fit)
+m <- as.matrix(fit)
+
+```
+
+```{r}
+print(fit, digits = 1)
+```
+
+```{r}
+J <- 5
+N <- 5000
+pois_data <- matrix(0, nrow = J, ncol = N)
+pois_data[1,] <- rpois(N, 0.02)
+pois_data[2,] <- rpois(N, 0.05)
+pois_data[3,] <- rpois(N, 0.1)
+pois_data[4,] <- rpois(N, 0.1)
+pois_data[5,] <- rpois(N, 0.2)
+
+exp_var <- log(c(3,4,9,11,21))
+```
+
+```{r}
+pois_dat <- list(J = J,
+                 N = N,
+                 y = pois_data,
+                 exp_var <- exp_var)
+fit <- stan(file = 'poisson-gamma.stan', data = pois_dat, 
+            iter = 1000, chains = 4)
+
+```
+
+```{r}
+print(fit, digits = 2)
+```
+
+```{r}
+summary(fit)
+```
+
+```{r}
+stan_params$beta
+```
+
