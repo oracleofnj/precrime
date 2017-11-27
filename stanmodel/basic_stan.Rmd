@@ -10,75 +10,23 @@ options(mc.cores = parallel::detectCores())
 ```
 
 ```{r}
-schools_dat <- list(J = 8, 
-                    y = c(28,  8, -3,  7, -1,  1, 18, 12),
-                    sigma = c(15, 10, 16, 11,  9, 11, 10, 18))
-
-```
-
-```{r}
-# data {
-#   int<lower=0> J; // number of schools 
-#   real y[J]; // estimated treatment effects
-#   real<lower=0> sigma[J]; // s.e. of effect estimates 
-# }
-# parameters {
-#   real mu; 
-#   real<lower=0> tau;
-#   real eta[J];
-# }
-# transformed parameters {
-#   real theta[J];
-#   for (j in 1:J)
-#     theta[j] = mu + tau * eta[j];
-# }
-# model {
-#   target += normal_lpdf(eta | 0, 1);
-#   target += normal_lpdf(y | theta, sigma);
-# }
-fit <- stan(file = '8schools.stan', data = schools_dat, 
-            iter = 1000, chains = 4)
-
-```
-
-```{r}
-print(fit)
-plot(fit)
-pairs(fit, pars = c("mu", "tau", "lp__"))
-
-la <- extract(fit, permuted = TRUE) # return a list of arrays 
-mu <- la$mu 
-
-### return an array of three dimensions: iterations, chains, parameters 
-a <- extract(fit, permuted = FALSE) 
-
-### use S3 functions as.array (or as.matrix) on stanfit objects
-a2 <- as.array(fit)
-m <- as.matrix(fit)
-
-```
-
-```{r}
-print(fit, digits = 1)
-```
-
-```{r}
 J <- 5
 N <- 5000
 pois_data <- matrix(0, nrow = J, ncol = N)
-pois_data[1,] <- rpois(N, 0.02)
-pois_data[2,] <- rpois(N, 0.05)
-pois_data[3,] <- rpois(N, 0.1)
-pois_data[4,] <- rpois(N, 0.1)
-pois_data[5,] <- rpois(N, 0.2)
+pois_data[1,] <- rpois(N, 0.04)
+pois_data[2,] <- rpois(N, 0.08)
+pois_data[3,] <- rpois(N, 0.16)
+pois_data[4,] <- rpois(N, 0.32)
+pois_data[5,] <- rpois(N, 0.64)
 
-exp_var <- log(c(3,4,9,11,21))
+exp_var <- c(2,1,0,-1,-2)
 ```
 
 ```{r}
 pois_dat <- list(J = J,
                  N = N,
                  y = pois_data,
+                 gamma_scale = 0.1,
                  exp_var <- exp_var)
 fit <- stan(file = 'poisson-gamma.stan', data = pois_dat, 
             iter = 1000, chains = 4)
@@ -90,10 +38,19 @@ print(fit, digits = 2)
 ```
 
 ```{r}
-summary(fit)
+plot(fit, pars=c("beta[1]", "beta[2]"))
+```
+
+
+```{r}
+pairs(fit, pars = c("beta"))
+```
+```{r}
+list_of_draws <- extract(fit)
+print(names(list_of_draws))
 ```
 
 ```{r}
-stan_params$beta
+mean(list_of_draws$beta[,2])
 ```
 
