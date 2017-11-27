@@ -4,6 +4,9 @@ output: html_document
 ---
 
 ```{r}
+rm(list=ls())
+library(dplyr)
+library(readr)
 library("rstan") # observe startup messages
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
@@ -52,5 +55,18 @@ print(names(list_of_draws))
 
 ```{r}
 mean(list_of_draws$beta[,2])
+```
+
+```{r}
+pc <- read_csv('../precrime_data/pivoted_felonies.csv')
+```
+
+```{r}
+pc$DAY_HOUR = as.factor(paste(pc$COMPLAINT_DAYOFWEEK, pc$COMPLAINT_HOURGROUP, sep='_'))
+pc$ADDR_PCT_CD = as.factor(pc$ADDR_PCT_CD)
+```
+
+```{r}
+pc
 ```
 
