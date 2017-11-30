@@ -7,87 +7,106 @@ output: html_document
 rm(list=ls())
 library(dplyr)
 library(readr)
-library("rstan") # observe startup messages
-rstan_options(auto_write = TRUE)
-options(mc.cores = parallel::detectCores())
-```
-
-```{r}
-J <- 5
-N <- 5000
-pois_data <- matrix(0, nrow = J, ncol = N)
-pois_data[1,] <- rpois(N, 0.04)
-pois_data[2,] <- rpois(N, 0.08)
-pois_data[3,] <- rpois(N, 0.16)
-pois_data[4,] <- rpois(N, 0.32)
-pois_data[5,] <- rpois(N, 0.64)
-
-exp_var <- c(2,1,0,-1,-2)
-```
-
-```{r}
-pois_dat <- list(J = J,
-                 N = N,
-                 y = pois_data,
-                 gamma_scale = 0.1,
-                 exp_var <- exp_var)
-fit <- stan(file = 'poisson-gamma.stan', data = pois_dat, 
-            iter = 1000, chains = 4)
-
-```
-
-```{r}
-print(fit, digits = 2)
-```
-
-```{r}
-plot(fit, pars=c("beta[1]", "beta[2]"))
+library(lubridate)
+library(speedglm)
 ```
 
 
 ```{r}
-pairs(fit, pars = c("beta"))
-```
-```{r}
-list_of_draws <- extract(fit)
-print(names(list_of_draws))
-```
-
-```{r}
-mean(list_of_draws$beta[,2])
+X_train_fine <- read_csv('../precrime_data/X_train_fine.csv')
+y_train_fine <- read_csv('../precrime_data/y_train_fine.csv')
+X_test_fine <- read_csv('../precrime_data/X_test_fine.csv')
+y_test_fine <- read_csv('../precrime_data/y_test_fine.csv')
 ```
 
 ```{r}
-pc <- read_csv('../precrime_data/pivoted_felonies.csv')
-pc$DAY_HOUR = as.factor(paste(pc$COMPLAINT_DAYOFWEEK, pc$COMPLAINT_HOURGROUP, sep='_'))
-pc$ADDR_PCT_CD = as.factor(pc$ADDR_PCT_CD)
+X_train_fine$DAY_HOUR = as.factor(paste(X_train_fine$COMPLAINT_DAYOFWEEK, X_train_fine$COMPLAINT_HOURGROUP, sep='_'))
+X_train_fine$ADDR_PCT_CD = as.factor(X_train_fine$ADDR_PCT_CD)
+X_train_fine$COMPLAINT_DATE <- ISOdate(X_train_fine$COMPLAINT_YEAR, X_train_fine$COMPLAINT_MONTH, X_train_fine$COMPLAINT_DAY)
+X_train_fine$COMPLAINT_DECIMALDATE <- decimal_date(X_train_fine$COMPLAINT_DATE)
+train_fine = merge(X_train_fine, y_train_fine, by="X1")
 ```
 
 ```{r}
-  # int<lower=1> N;                                 // number of observations
-  # int<lower=1> num_precincts;                     // number of precincts
-  # int<lower=1,upper=num_precincts> precinct[N];   // precinct for each observation
-  # int<lower=1,upper=42> hourgroup[N];             // hourgroup for each observation
-  # 
-  # real<lower=0> gamma_scale;                      // affects the prior
-  # 
-  # int<lower=0> y[N];                              // data
-
-precrime_data <- list(
-  N = nrow(pc),
-  num_precincts = nlevels(pc$ADDR_PCT_CD),
-  precinct = as.integer(pc$ADDR_PCT_CD),
-  hourgroup = as.integer(pc$DAY_HOUR),
-  gamma_scale = 0.1,
-  y <- pc$GrandLarceny
-)
-fit <- stan(file = 'precrime.stan', data = precrime_data, 
-            iter = 1000, chains = 4)
-
+X_test_fine$DAY_HOUR = as.factor(paste(X_test_fine$COMPLAINT_DAYOFWEEK, X_test_fine$COMPLAINT_HOURGROUP, sep='_'))
+X_test_fine$ADDR_PCT_CD = as.factor(X_test_fine$ADDR_PCT_CD)
+X_test_fine$COMPLAINT_DATE <- ISOdate(X_test_fine$COMPLAINT_YEAR, X_test_fine$COMPLAINT_MONTH, X_test_fine$COMPLAINT_DAY)
+X_test_fine$COMPLAINT_DECIMALDATE <- decimal_date(X_test_fine$COMPLAINT_DATE)
+test_fine = merge(X_test_fine, y_test_fine, by="X1")
 ```
 
 ```{r}
-nrow(pc)
-nlevels(pc$ADDR_PCT_CD)
+train_fine$YEARFRAC <- train_fine$COMPLAINT_DECIMALDATE %% 1
+test_fine$YEARFRAC <- test_fine$COMPLAINT_DECIMALDATE %% 1
+```
+
+```{r}
+y_pred_fine <- data.frame(X1=test_fine$X1)
+```
+
+```{r}
+model <- speedglm(Homicide ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$Homicide <- predict(model, newdata=test_fine, type='response')
+print('.')
+
+model <- speedglm(Rape ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$Rape <- predict(model, newdata=test_fine, type='response')
+print('.')
+
+model <- speedglm(Robbery ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$Robbery <- predict(model, newdata=test_fine, type='response')
+print('.')
+
+model <- speedglm(FelonyAssault ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$FelonyAssault <- predict(model, newdata=test_fine, type='response')
+print('.')
+
+model <- speedglm(Burglary ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$Burglary <- predict(model, newdata=test_fine, type='response')
+print('.')
+
+model <- speedglm(GrandLarceny ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$GrandLarceny <- predict(model, newdata=test_fine, type='response')
+print('.')
+
+model <- speedglm(GrandLarcenyAuto ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$GrandLarcenyAuto <- predict(model, newdata=test_fine, type='response')
+print('.')
+
+model <- speedglm(Fraud ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$Fraud <- predict(model, newdata=test_fine, type='response')
+print('.')
+
+model <- speedglm(Forgery ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$Forgery <- predict(model, newdata=test_fine, type='response')
+print('.')
+
+model <- speedglm(Arson ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$Arson <- predict(model, newdata=test_fine, type='response')
+print('.')
+
+model <- speedglm(Drugs ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$Drugs <- predict(model, newdata=test_fine, type='response')
+print('.')
+
+model <- speedglm(Weapons ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$Weapons <- predict(model, newdata=test_fine, type='response')
+print('.')
+
+model <- speedglm(CriminalMischief ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$CriminalMischief <- predict(model, newdata=test_fine, type='response')
+print('.')
+
+model <- speedglm(Other ~ ADDR_PCT_CD + DAY_HOUR + poly(COMPLAINT_DECIMALDATE, 3) + poly(YEARFRAC, 3) + poly(precipIntensity, 2) +poly(temperature, 2), family = poisson(link='log'), data=train_fine)
+y_pred_fine$Other <- predict(model, newdata=test_fine, type='response')
+print('.')
+```
+
+```{r}
+(cor(y_test_fine$Rape, y_pred_fine$Rape))^2
+```
+
+```{r}
+mean((y_test_fine$Rape - y_pred_fine$Rape)^2)
 ```
 

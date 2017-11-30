@@ -272,9 +272,10 @@ def sample_model(X_train, y_train, X_test):
     ]].copy()
     crime_types = y_train.select_dtypes(exclude=['object']).columns
 
+    ridges = {}
     for crime_type in crime_types:
-        ridge = Ridge()
-        ridge.fit(X_train_features, y_train[crime_type])
-        y_pred[crime_type] = ridge.predict(X_test_features)
+        ridges[crime_type] = Ridge()
+        ridges[crime_type].fit(X_train_features, y_train[crime_type])
+        y_pred[crime_type] = ridges[crime_type].predict(X_test_features)
 
-    return y_pred
+    return y_pred, ridges, X_train_features.columns
