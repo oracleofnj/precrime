@@ -22,11 +22,12 @@ def simple_time_series_model(X_train, y_train, X_test, y_test):
             ),
             index=X.index
         )
-        year_frac = pd.Series(
-            (mid_dates - start_dates) / (end_dates - start_dates),
-            index=X.index
-        )
-        return decimal_date, year_frac
+        return decimal_date
+
+    X_all = pd.concat([X_train, X_test])
+    X_all['DECIMAL_DATE'] = get_decimal_date(X_all)
+    y_all = pd.concat([y_train, y_test])
+    all_all = pd.merge(X_all, y_all, left_index=True, right_index=True)
 
     y_pred = X_test[[
         'COMPLAINT_YEAR',
@@ -41,20 +42,30 @@ def simple_time_series_model(X_train, y_train, X_test, y_test):
         'COMPLAINT_MONTH',
         'COMPLAINT_DAY',
         'COMPLAINT_HOURGROUP',
+        'COMPLAINT_DAYOFWEEK',
     ]].copy().drop_duplicates()
+    buckets['DECIMAL_DATE'] = get_decimal_date(buckets)
+    preds = []
+    y_train_dvs = y_train.select_dtypes(exclude=['object']).columns
     for index, bucket in buckets.iterrows():
-        
-        X_test_combined =
-        print(bucket)
-
-    return None
-
-    y_train_dvs = y_train.select_dtypes(exclude=['object'])
-    ridge = Ridge()
-    ridge.fit(X_train_features, y_train_dvs)
-    y_pred_dvs = ridge.predict(X_test_features)
-
-    for i, crime_type in enumerate(y_train_dvs.columns):
-        y_pred[crime_type] = np.maximum(0, y_pred_dvs[:, i])
-
-    return y_pred
+        comparison = all_all[
+            (all_all['COMPLAINT_DAYOFWEEK'] == bucket['COMPLAINT_DAYOFWEEK']) &
+            (all_all['COMPLAINT_HOURGROUP'] == bucket['COMPLAINT_HOURGROUP']) &
+            (all_all['DECIMAL_DATE'] < (bucket['DECIMAL_DATE'] - 6/365)) &
+            (all_all['DECIMAL_DATE'] > (bucket['DECIMAL_DATE'] - 37/365))
+        ]
+        pred = comparison.groupby('ADDR_PCT_CD')[y_train_dvs].mean()
+        pred.reset_index(inplace=True)
+        for fld in [
+            'COMPLAINT_YEAR',
+            'COMPLAINT_MONTH',
+            'COMPLAINT_DAY',
+            'COMPLAINT_HOURGROUP',
+        ]:
+            pred[fld] = bucket[fld]
+        preds.append(pred)
+    all_preds = pd.concat(preds)
+    return y_pred.reset_index().merge(
+        all_preds,
+        how='left'
+    ).set_index('index').fillna(0)
