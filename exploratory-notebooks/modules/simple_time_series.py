@@ -1,11 +1,11 @@
-"""Functions to make crime predictions."""
+"""Functions to make crime predictions using a time-series model."""
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import Ridge
 
 
-def poly_ridge_model(X_train, y_train, X_test):
-    """Ridge regression with categorical features."""
+def simple_time_series_model(X_train, y_train, X_test, y_test):
+    """Moving average of last four weeks."""
     def get_decimal_date(X):
         y = np.array(X['COMPLAINT_YEAR']-1970, dtype='<M8[Y]')
         m = np.array(X['COMPLAINT_MONTH']-1, dtype='<m8[M]')
@@ -28,31 +28,6 @@ def poly_ridge_model(X_train, y_train, X_test):
         )
         return decimal_date, year_frac
 
-    def add_categorical_features_and_dates(X):
-        X_features = X[[
-            'ADDR_PCT_CD',
-            'temperature',
-            'precipIntensity'
-        ]].copy()
-        X_features['COMPLAINT_DAY_HOUR'] = \
-            X['COMPLAINT_DAYOFWEEK'].astype(str) + '_' + \
-            X['COMPLAINT_HOURGROUP'].astype(str)
-        decimal_date, year_frac = get_decimal_date(X)
-        X_features['DECIMAL_DATE'] = decimal_date
-        X_features['YEAR_FRAC'] = year_frac
-        # X_features['temp_sq'] = X_features['temperature'] ** 2
-        # X_features['precip_sq'] = X_features['precipIntensity'] ** 2
-        X_features['date_sq'] = X_features['DECIMAL_DATE'] ** 2
-        X_features['yf_sq'] = X_features['YEAR_FRAC'] ** 2
-        # X_features['date_cube'] = X_features['DECIMAL_DATE'] ** 3
-        # X_features['yf_cube'] = X_features['YEAR_FRAC'] ** 3
-        return pd.get_dummies(
-            X_features,
-            columns=['ADDR_PCT_CD', 'COMPLAINT_DAY_HOUR']
-        )
-
-    X_train_features = add_categorical_features_and_dates(X_train)
-    X_test_features = add_categorical_features_and_dates(X_test)
     y_pred = X_test[[
         'COMPLAINT_YEAR',
         'COMPLAINT_MONTH',
@@ -60,6 +35,19 @@ def poly_ridge_model(X_train, y_train, X_test):
         'COMPLAINT_HOURGROUP',
         'ADDR_PCT_CD'
     ]].copy()
+
+    buckets = X_test[[
+        'COMPLAINT_YEAR',
+        'COMPLAINT_MONTH',
+        'COMPLAINT_DAY',
+        'COMPLAINT_HOURGROUP',
+    ]].copy().drop_duplicates()
+    for index, bucket in buckets.iterrows():
+        
+        X_test_combined =
+        print(bucket)
+
+    return None
 
     y_train_dvs = y_train.select_dtypes(exclude=['object'])
     ridge = Ridge()
