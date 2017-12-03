@@ -1,49 +1,36 @@
 ## app.R ##
-library(shiny)
 library(shinydashboard)
-library(ggplot2)
-library(dplyr)
 library(leaflet)
 library(geojsonio)
-library("shiny")
-library("shinydashboard")
-library("highcharter")
-library("dplyr")
-library("viridisLite")
-library("markdown")
-library("quantmod")
-library("tidyr")
-library("DT")
-library("shiny")
-library("leaflet")
-library("plotly")
-library("wordcloud2")
-library('scatterD3')
-library(shiny)
-library(leaflet)
-library(data.table)
-library(choroplethrZip)
-library(devtools)
-library(MASS)
-library(vcd)
-library(dplyr)
 library(ggplot2)
-library(tidyr)
-
+library(quantmod)
 library(readr)
+library(MASS)
+library(dplyr)
+library(devtools)
+library(markdown)
+library(shiny)
 library(viridis)
+library(vcd)
+library(plotly)
 library(RColorBrewer)
 library(gridExtra)
-
+library(scatterD3)
+library(DT)
+library(tidyr)
+library(highcharter)
+library(choroplethrZip)
+library(data.table)
+library(viridisLite)
 #data prepare
-ts <- read.csv('/Users/panpancheng/Documents/study/capstone/Git/precrime/precrime_data/ts.csv')
-ts2 <- read.csv('/Users/panpancheng/Documents/study/capstone/Git/precrime/precrime_data/ts2.csv')
-ts3 <- read.csv('/Users/panpancheng/Documents/study/capstone/Git/precrime/precrime_data/ts3.csv')
-ts_month <- read.csv('/Users/panpancheng/Documents/study/capstone/Git/precrime/precrime_data/ts_month.csv')
+ts <- read.csv('precrime_data/ts.csv')
+ts2 <- read.csv('precrime_data/ts2.csv')
+ts3 <- read.csv('precrime_data/ts3.csv')
+ts_month <- read.csv('precrime_data/ts_month.csv')
 
 
 
-nypd <- read_csv("/Users/panpancheng/Documents/study/capstone/Git/precrime/precrime_data/clean_felonies.csv", col_types = cols(Date = col_date(format = "%m/%d/%Y"), Time = col_character()))
+nypd <- read_csv("precrime_data/clean_felonies.csv", col_types = cols(Date = col_date(format = "%m/%d/%Y"), Time = col_character()))
 nypd$Year=format(nypd$COMPLAINT_DATETIME,"%Y")
 nypd$Month=format(nypd$COMPLAINT_DATETIME,"%m")
 nypd$Day=format(nypd$COMPLAINT_DATETIME,"%d")
@@ -55,7 +42,7 @@ names(nypd)[names(nypd)=='Longitude']<-'lng'
 
 
 
-precincts <- geojsonio::geojson_read('/Users/panpancheng/Documents/study/capstone/Git/precrime/precrime_data/nypd_precincts.geojson', what='sp')
+precincts <- geojsonio::geojson_read('precrime_data/nypd_precincts.geojson', what='sp')
 
 bins <- c(2, 20, 50000, 70000, 100000, 120000, 140000, 180000, 250000)
 pal <- colorBin(
@@ -283,7 +270,7 @@ server <- function(input, output) {
                  popup=~as.character(paste("Crime Type: ",OFNS_DESC,
                                            "Precinct: ",  ADDR_PCT_CD 
                  ))) %>%
-      addLegend("bottomleft", pal = pal, values = ~OFNS_DESC,
+      leaflet::addLegend("bottomleft", pal = pal, values = ~OFNS_DESC,
                 title = "Crime Type",
                 opacity = 1 )%>% 
       addMarkers(
