@@ -58,33 +58,7 @@ Crime_Per_Month <- ts_month
 
 precincts <- geojsonio::geojson_read('../precrime_data/nypd_precincts.geojson', what='sp')
 
-bins <- c(2, 20, 50000, 70000, 100000, 120000, 140000, 180000, 250000)
-pal <- colorBin(
-  'viridis',
-  domain=precincts$Population,
-  bins=bins,
-  reverse=T
-)
-highlight <- highlightOptions(
-  weight = 5,
-  color = "#666",
-  dashArray = "",
-  fillOpacity = 0.7,
-  bringToFront = TRUE
-)
-labels <- sprintf(
-  paste(
-    "<strong>Precinct %d</strong><br/>",
-    "Population: %s"
-  ),
-  as.integer(precincts$Precinct),
-  format(as.integer(precincts$Population),big.mark=",", trim=TRUE)
-) %>% lapply(htmltools::HTML)
-labelopts <- labelOptions(
-  style = list("font-weight" = "normal", padding = "3px 8px"),
-  textsize = "15px",
-  direction = "auto"
-)
+
 
 
 
@@ -95,9 +69,9 @@ ui <- dashboardPage(
     sidebarMenu(
       menuItem("Crime Map", tabName = "crime", icon = icon("map-marker")),
       menuItem("Time Series Analysis", tabName = "dashboard", icon = icon("dashboard")),  
-      menuItem("Population Map", tabName = "population", icon = icon("map-marker")),
+      #menuItem("Population Map", tabName = "population", icon = icon("map-marker")),
       menuItem("Complaint Analysis", tabName = "complaint", icon = icon("bar-chart")),
-      menuItem("Prediction", tabName = "prediction", icon = icon("area-chart")),
+      #menuItem("Prediction", tabName = "prediction", icon = icon("area-chart")),
       menuItem("Report data", tabName = "rawdata", icon = icon("table"))
     )
   ),
@@ -262,6 +236,7 @@ server <- function(input, output) {
   
   #out map
   output$crimemap <- renderLeaflet({
+
     #### Map ######################################################################
     
     #read and update the input data
@@ -280,7 +255,29 @@ server <- function(input, output) {
                  as.Date(nypd$REPORT_DATE,origin = "1970-01-01") <= end_date())       %>%
         filter(OFFENSE %in% crime_type())
     })
+    ####################
+    nypd1<-nypd %>% 
+      filter(as.Date(nypd$REPORT_DATE,origin = "1970-01-01") >= input$Date_Range[1] & 
+               as.Date(nypd$REPORT_DATE,origin = "1970-01-01") <= input$Date_Range[2])       %>%
+      filter(OFFENSE %in% input$Crime_Type)
+    l<-nypd1 %>%
+      group_by(ADDR_PCT_CD) %>% 
+      summarise(freq=n())
+    l$Precinct<-l$ADDR_PCT_CD
+    months<-as.double(difftime(input$Date_Range[2],input$Date_Range[1],units = 'days'))/30
+    precincts@data['12','Population']=1000
     
+    print(precincts@data$Population)
+    precincts@data$months=months
+    
+    precincts@data<-merge(precincts@data,l, by='Precinct')
+    precincts@data['pop_by_100k']<-precincts@data['Population']/100000
+    precincts@data['v1']<- precincts@data['freq']/ precincts@data['pop_by_100k']
+    precincts@data['value']<- precincts@data['v1']/ precincts@data['months']
+    #precincts@data['value']<- precincts@data['freq']/ 10
+    print(precincts@data)
+   
+    ###################
     #set color
     col=c('honeydew','lightblue','hotpink','lightgoldenrodyellow','ivory','gray91','lemonchiffon1','darkred','yellow','cyan','deepskyblue','lightgreen','red','purple')
     
@@ -289,17 +286,60 @@ server <- function(input, output) {
     
     #color palette
     pal <- colorFactor(col, domain = var)
-    
+    ######## map options
+    bins <- seq(min(precincts@data$value),max(precincts@data$value),length.out=10)
+    pal_1 <- colorBin(
+      'viridis',
+      domain=precincts$value,
+      bins=bins,
+      reverse=T
+    )
+    highlight <- highlightOptions(
+      weight = 5,
+      color = "#666",
+      dashArray = "",
+      fillOpacity = 0.7,
+      bringToFront = TRUE
+    )
+    labels <- sprintf(
+      paste(
+        "<strong>Precinct %d</strong><br/>",
+        "Population: %s"
+      ),
+      as.integer(precincts$Precinct),
+      format(as.integer(precincts$Population),big.mark=",", trim=TRUE)
+    ) %>% lapply(htmltools::HTML)
+    labelopts <- labelOptions(
+      style = list("font-weight" = "normal", padding = "3px 8px"),
+      textsize = "15px",
+      direction = "auto"
+    )
     print(colnames(filtered_crime_data()))
+    
+    
+    ####widget
     leaflet(data = filtered_crime_data()) %>% 
       addProviderTiles('Stamen.TonerLite') %>% 
       setView(lng = -73.971035, lat = 40.775659, zoom = 12) %>% 
-      addCircles(lng=~lng, lat=~lat, radius=40, 
-                 stroke=FALSE, fillOpacity=0.4,color=~pal(OFFENSE),
-                 popup=~as.character(paste("Crime Type: ",OFFENSE,
-                                           "Precinct: ",  ADDR_PCT_CD 
-                 ))) %>%
-      
+      addPolygons(data=precincts,
+        fillColor = ~pal_1(precincts$value),
+        weight=2,
+        opacity=1,
+        color='white',
+        dashArray='3',
+        fillOpacity = 0.7,
+        highlight=highlight,
+        label=labels,
+        labelOptions = labelopts
+      )%>%
+      #addCircles(lng=~lng, lat=~lat, radius=40, 
+                # stroke=FALSE, fillOpacity=0.4,color=~pal(OFFENSE),
+                 #popup=~as.character(paste("Crime Type: ",OFFENSE,
+                  #                         "Precinct: ",  ADDR_PCT_CD 
+                 #))) %>%
+      leaflet::addLegend("bottomleft", pal = pal_1, values = precincts$value,
+                title = "crime per month per 100k pop",
+                opacity = 1 )%>%
       addMarkers(
         clusterOptions = markerClusterOptions())
   })
