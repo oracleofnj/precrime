@@ -53,12 +53,23 @@ def fancy_time_series_model(X_train, y_train, X_test, y_test):
     preds = []
     y_train_dvs = y_train.select_dtypes(exclude=['object']).columns
     for index, bucket in buckets.iterrows():
-        comparison = all_all[
-            (all_all['COMPLAINT_DAYOFWEEK'] == bucket['COMPLAINT_DAYOFWEEK']) &
-            (all_all['COMPLAINT_HOURGROUP'] == bucket['COMPLAINT_HOURGROUP']) &
-            (all_all['DECIMAL_DATE'] < (bucket['DECIMAL_DATE'] - 6/365)) &
-            (all_all['DECIMAL_DATE'] > (bucket['DECIMAL_DATE'] - 37/365))
+        comparison_fullyear = all_all[
+            (all_all['DECIMAL_DATE'] >= get_52_weeks_ago(
+                bucket['COMPLAINT_YEAR'],
+                bucket['COMPLAINT_MONTH'],
+                bucket['COMPLAINT_DAY'])) &
+            (all_all['DECIMAL_DATE'] < get_one_decimal_date(
+                bucket['COMPLAINT_YEAR'],
+                bucket['COMPLAINT_MONTH'],
+                bucket['COMPLAINT_DAY']))
         ]
+        total_felonies_last_year = np.sum(
+            comparison_fullyear[y_train_dvs].values
+        )
+        comparison_fullyear_bucketed = comparison_fullyear.groupby([
+            'COMPLAINT_DAYOFWEEK', 'COMPLAINT_HOURGROUP', 'ADDR_PCT_CD'
+        ])[y_train_dvs].sum() / total_felonies_last_year
+
         pred = comparison.groupby('ADDR_PCT_CD')[y_train_dvs].mean()
         pred.reset_index(inplace=True)
         for fld in [
