@@ -270,11 +270,13 @@ def sample_model(X_train, y_train, X_test):
         'COMPLAINT_HOURGROUP',
         'ADDR_PCT_CD'
     ]].copy()
-    crime_types = y_train.select_dtypes(exclude=['object']).columns
 
-    for crime_type in crime_types:
-        ridge = Ridge()
-        ridge.fit(X_train_features, y_train[crime_type])
-        y_pred[crime_type] = ridge.predict(X_test_features)
+    y_train_dvs = y_train.select_dtypes(exclude=['object'])
+    ridge = Ridge()
+    ridge.fit(X_train_features, y_train_dvs)
+    y_pred_dvs = ridge.predict(X_test_features)
+
+    for i, crime_type in enumerate(y_train_dvs.columns):
+        y_pred[crime_type] = y_pred_dvs[:, i]
 
     return y_pred
