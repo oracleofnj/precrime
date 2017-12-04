@@ -7,7 +7,7 @@ import datetime
 import csv
 from sklearn.ensemble import RandomForestRegressor
 
-# Use RandomForestClassifier
+# Use RandomForestRegressor
 def sample_model_RF(X_train, y_train, X_test):
     """Example model to perform ridge regression on each felony type."""
     def add_categorical_features(X):
@@ -37,8 +37,7 @@ def sample_model_RF(X_train, y_train, X_test):
     crime_types = y_train.select_dtypes(exclude=['object']).columns
 
     for crime_type in crime_types:
-        clf = RandomForestClassifier()
-        RandomForestRegressor(max_depth=2, random_state=0)
+        clf = RandomForestRegressor(max_depth=2, random_state=0)    
         clf.fit(X_train_features, y_train[crime_type])
         y_pred[crime_type] = clf.predict(X_test_features)
 

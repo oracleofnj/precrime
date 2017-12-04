@@ -29,33 +29,34 @@ library(vcd)
 library(dplyr)
 library(ggplot2)
 library(tidyr)
-
 library(readr)
 library(viridis)
 library(RColorBrewer)
 library(gridExtra)
 
 #data prepare
-ts <- read.csv('/Users/panpancheng/Documents/study/capstone/Git/precrime/precrime_data/ts.csv')
-ts2 <- read.csv('/Users/panpancheng/Documents/study/capstone/Git/precrime/precrime_data/ts2.csv')
-ts3 <- read.csv('/Users/panpancheng/Documents/study/capstone/Git/precrime/precrime_data/ts3.csv')
-ts_month <- read.csv('/Users/panpancheng/Documents/study/capstone/Git/precrime/precrime_data/ts_month.csv')
 
-
-
-nypd <- read_csv("/Users/panpancheng/Documents/study/capstone/Git/precrime/precrime_data/clean_felonies.csv", col_types = cols(Date = col_date(format = "%m/%d/%Y"), Time = col_character()))
+nypd <- read_csv("../precrime_data/clean_felonies_offense.csv", col_types = cols(Date = col_date(format = "%m/%d/%Y"), Time = col_character()))
 nypd$Year=format(nypd$COMPLAINT_DATETIME,"%Y")
 nypd$Month=format(nypd$COMPLAINT_DATETIME,"%m")
 nypd$Day=format(nypd$COMPLAINT_DATETIME,"%d")
 nypd<-na.omit(nypd, cols=c('Longitude', 'Latitude'))
 
+ts <- nypd %>% group_by(Year) %>% summarise(Total_Crimes=n())
+ts2 <- nypd %>% group_by(OFFENSE,Year) %>% summarise(count1=n())
+ts_month <- nypd %>% group_by(OFFENSE,Month) %>% summarise(count1=n())
+ts3 <- nypd %>% group_by(Year,BORO_NM) %>% summarise(count1=n())
+
 names(nypd)[names(nypd)=='Latitude']<-'lat'
 names(nypd)[names(nypd)=='Longitude']<-'lng'
+
+
+Crime_Per_Month <- ts_month
 # Define server logic required to draw a histogram
 
 
 
-precincts <- geojsonio::geojson_read('/Users/panpancheng/Documents/study/capstone/Git/precrime/precrime_data/nypd_precincts.geojson', what='sp')
+precincts <- geojsonio::geojson_read('../precrime_data/nypd_precincts.geojson', what='sp')
 
 bins <- c(2, 20, 50000, 70000, 100000, 120000, 140000, 180000, 250000)
 pal <- colorBin(
@@ -92,12 +93,12 @@ ui <- dashboardPage(
   dashboardHeader(title = "Crime Prediction"),
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Dashboard", tabName = "dashboard", icon = icon("dashboard")),        
-      menuItem("Crime Map", tabName = "crimemap", icon = icon("map-marker")),
+      menuItem("Crime Map", tabName = "crime", icon = icon("map-marker")),
+      menuItem("Time Series Analysis", tabName = "dashboard", icon = icon("dashboard")),  
       menuItem("Population Map", tabName = "population", icon = icon("map-marker")),
       menuItem("Complaint Analysis", tabName = "complaint", icon = icon("bar-chart")),
       menuItem("Prediction", tabName = "prediction", icon = icon("area-chart")),
-      menuItem("Raw data", tabName = "rawdata", icon = icon("table"))
+      menuItem("Report data", tabName = "rawdata", icon = icon("table"))
     )
   ),
   dashboardBody(
@@ -128,7 +129,7 @@ ui <- dashboardPage(
                 collapsible = TRUE,
                 width = "100%",
                 height = "100%",
-                leafletOutput("population_map")
+                leafletOutput("population_map",height=670)
               )),
       
       
@@ -155,40 +156,66 @@ ui <- dashboardPage(
               h2("Crime Prediction")),
       
       tabItem(tabName = "rawdata",
-              h2("Raw Data")),
+              #h2("Crime Amount Per Month Data"),
+              fluidPage(
+                
+                # App title ----
+                titlePanel("Downloading Data"),
+                
+                # Sidebar layout with input and output definitions ----
+                sidebarLayout(
+                  
+                  # Sidebar panel for inputs ----
+                  sidebarPanel(
+                    
+                    # Input: Choose dataset ----
+                    selectInput("dataset", "Choose a dataset:",
+                                choices = c("Crime_Per_Month","Crime_Per_Year")),
+                    
+                    # Button
+                    downloadButton("downloadData", "Download")
+                    
+                  ),
+                  
+                  # Main panel for displaying outputs ----
+                  mainPanel(
+                    
+                    tableOutput("table")
+                    
+                  )
+                  
+                )
+              )
+              ),
       
-      tabItem(tabName = "crimemap", 
-              sidebarLayout(position = "right", 
-                            sidebarPanel(
-                              h4("Filter"),
-                              
+      tabItem(tabName = "crime",
+              #h2("Crime Map"),
+              
+              box(
+                #title = "Crime Map",
+                collapsible = TRUE,
+                width = "100%",
+                height = "100%",
+                leafletOutput("crimemap",height=670),
+                absolutePanel(top = 10, right = 10,
                               # widget for crime type
-                              checkboxGroupInput("Crime_Type", label = "Crime_Type",
-                                                 choices = c("BURGLARY", "FELONY ASSAULT", "GRAND LARCENY",
-                                                             "GRAND LARCENY OF MOTOR VEHICLE", "RAPE", "ROBBERY",
-                                                             "MURDER & NON-NEGL. MANSLAUGHTE"),
-                                                 selected = c("BURGLARY", "FELONY ASSAULT", "GRAND LARCENY",
-                                                              "GRAND LARCENY OF MOTOR VEHICLE", "RAPE","ROBBERY",
-                                                              "MURDER & NON-NEGL. MANSLAUGHTE")),
+                              selectInput("Crime_Type", 
+                                          label = "Crime Type",
+                                          choices = c("Arson", "Burglary","CriminalMischief","Drugs","FelonyAssault","Forgery","Fraud","GrandLarceny","GrandLarcenyAuto","Homicide","Rape","Robbery", "Weapons" ,"Other" ),
+                                          selected = c("Arson", "Burglary","CriminalMischief","Drugs","FelonyAssault","Forgery","Fraud","GrandLarceny","GrandLarcenyAuto","Homicide","Rape","Robbery", "Weapons" ,"Other" )
+                                          ),
                               
                               #date range
-                              dateRangeInput("Date_Range", "Choose a date range", 
+                              dateRangeInput("Date_Range", "Choose a Date Range", 
                                              start = "2016-10-01", end = "2016-12-31", 
-                                             min = "2006-02-01", max = "2016-12-31"),
+                                             min = "2006-01-02", max = "2016-12-31")
                               
-                              
-                              
-                              h4("Click the Update button to see the map: "),
                               #update button
-                              actionButton("button", "Update", 
-                                           style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
-                            ),
-                            
-                            mainPanel(
-                              leafletOutput("crimemap", width = "100%", height = 650)
-                            )
-              )
-      )
+                              #actionButton("button", "Go", 
+                              #             style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
+                              )
+                
+              ))
       
     )
   ))
@@ -233,43 +260,32 @@ server <- function(input, output) {
     )
   })
   
-  
-  
-  
   #out map
   output$crimemap <- renderLeaflet({
     #### Map ######################################################################
     
     #read and update the input data
-    start_date<-eventReactive(input$button, {
-      start_date<-input$Date_Range[1]
+    start_date<-reactive({input$Date_Range[1]
     })
     
-    end_date<-eventReactive(input$button, {
-      input$button
-      end_date<-input$Date_Range[2]
+    end_date<-reactive({input$Date_Range[2]
     })
     
-    crime_type<-eventReactive(input$button, {
-      input$button
-      crime_type<-input$Crime_Type
+    crime_type<-reactive({crime_type<-input$Crime_Type
     })
     
     # subsets the crime data depending on user input in the Shiny app
-    filtered_crime_data <- eventReactive(input$button, {
-      #filter by crime type,date range,hour
-      filtered_crime_data<-nypd %>% 
+    filtered_crime_data <- reactive({nypd %>% 
         filter(as.Date(nypd$REPORT_DATE,origin = "1970-01-01") >= start_date() & 
                  as.Date(nypd$REPORT_DATE,origin = "1970-01-01") <= end_date())       %>%
-        filter(OFNS_DESC %in% crime_type())
+        filter(OFFENSE %in% crime_type())
     })
     
     #set color
-    col=c('darkred','yellow','cyan','deepskyblue','lightgreen','red','purple')
+    col=c('honeydew','lightblue','hotpink','lightgoldenrodyellow','ivory','gray91','lemonchiffon1','darkred','yellow','cyan','deepskyblue','lightgreen','red','purple')
     
     #legend
-    var=c( "BURGLARY", "FELONY ASSAULT", "GRAND LARCENY",
-           "GRAND LARCENY OF MOTOR VEHICLE", "RAPE", "ROBBERY")
+    var=c("Arson", "Burglary","CriminalMischief","Drugs","FelonyAssault","Forgery","Fraud","GrandLarceny","GrandLarcenyAuto","Homicide","Rape","Robbery", "Weapons" ,"Other" )
     
     #color palette
     pal <- colorFactor(col, domain = var)
@@ -279,43 +295,37 @@ server <- function(input, output) {
       addProviderTiles('Stamen.TonerLite') %>% 
       setView(lng = -73.971035, lat = 40.775659, zoom = 12) %>% 
       addCircles(lng=~lng, lat=~lat, radius=40, 
-                 stroke=FALSE, fillOpacity=0.4,color=~pal(OFNS_DESC),
-                 popup=~as.character(paste("Crime Type: ",OFNS_DESC,
+                 stroke=FALSE, fillOpacity=0.4,color=~pal(OFFENSE),
+                 popup=~as.character(paste("Crime Type: ",OFFENSE,
                                            "Precinct: ",  ADDR_PCT_CD 
                  ))) %>%
-      addLegend("bottomleft", pal = pal, values = ~OFNS_DESC,
-                title = "Crime Type",
-                opacity = 1 )%>% 
+      
       addMarkers(
         clusterOptions = markerClusterOptions())
   })
   
-  #### Theme #####################################################################
-  hcbase <- reactive({
-    
-    hc <- highchart() 
-    
-    if (input$exporting)
-      hc <- hc %>% hc_exporting(enabled = TRUE)
-    if (input$theme != FALSE) {
-      theme <- switch(input$theme,
-                      null = hc_theme_null(),
-                      economist = hc_theme_economist(),
-                      dotabuff = hc_theme_db(),
-                      darkunica = hc_theme_darkunica(),
-                      gridlight = hc_theme_gridlight(),
-                      sandsignika = hc_theme_sandsignika(),
-                      fivethirtyeight = hc_theme_538(),
-                      chalk = hc_theme_chalk(),
-                      handdrwran = hc_theme_handdrawn()
-      )
-      
-      hc <- hc %>% hc_add_theme(theme)
-    }
-    
-    hc
-    
+  #########raw data###########
+  # Reactive value for selected dataset ----
+  datasetInput <- reactive({
+    switch(input$dataset,
+           "Crime_Per_Month" = Crime_Per_Month,
+           "Crime_Per_Year" = ts2)
   })
+  
+  # Table of selected dataset ----
+  output$table <- renderTable({
+    datasetInput()
+  })
+  
+  # Downloadable csv of selected dataset ----
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste(input$dataset, ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(datasetInput(), file, row.names = FALSE)
+    }
+  )
   
 }
 
