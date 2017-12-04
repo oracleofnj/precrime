@@ -23,13 +23,17 @@ def fancy_time_series_model(X_train, y_train, X_test, y_test):
         y_np = np.array([y - 1970], dtype='<M8[Y]')
         m_np = np.array([m - 1], dtype='<m8[M]')
         d_np = np.array([d - 1], dtype='<m8[D]')
-
         return (y_np + m_np + d_np)[0]
 
     def get_52_weeks_ago(y, m, d):
         today_np = get_one_decimal_date(y, m, d)
         lastyear_np = today_np - np.timedelta64(7 * 52, 'D')
         return lastyear_np
+
+    def get_4_weeks_ago(y, m, d):
+        today_np = get_one_decimal_date(y, m, d)
+        lastmonth_np = today_np - np.timedelta64(7 * 4, 'D')
+        return lastmonth_np
 
     X_all = pd.concat([X_train, X_test])
     X_all['DECIMAL_DATE'] = get_np_dates(X_all)
@@ -48,6 +52,7 @@ def fancy_time_series_model(X_train, y_train, X_test, y_test):
         'COMPLAINT_YEAR',
         'COMPLAINT_MONTH',
         'COMPLAINT_DAY',
+        'COMPLAINT_DAYOFWEEK',
     ]].copy().drop_duplicates()
     buckets['DECIMAL_DATE'] = get_np_dates(buckets)
     preds = []
@@ -66,17 +71,36 @@ def fancy_time_series_model(X_train, y_train, X_test, y_test):
         total_felonies_last_year = np.sum(
             comparison_fullyear[y_train_dvs].values
         )
+        comparison_lastmonth = all_all[
+            (all_all['DECIMAL_DATE'] >= get_4_weeks_ago(
+                bucket['COMPLAINT_YEAR'],
+                bucket['COMPLAINT_MONTH'],
+                bucket['COMPLAINT_DAY'])) &
+            (all_all['DECIMAL_DATE'] < get_one_decimal_date(
+                bucket['COMPLAINT_YEAR'],
+                bucket['COMPLAINT_MONTH'],
+                bucket['COMPLAINT_DAY']))
+        ]
+        total_felonies_last_month = np.sum(
+            comparison_lastmonth[y_train_dvs].values
+        )
+
         comparison_fullyear_bucketed = comparison_fullyear.groupby([
             'COMPLAINT_DAYOFWEEK', 'COMPLAINT_HOURGROUP', 'ADDR_PCT_CD'
-        ])[y_train_dvs].sum() / total_felonies_last_year
-
-        pred = comparison.groupby('ADDR_PCT_CD')[y_train_dvs].mean()
-        pred.reset_index(inplace=True)
+        ])[y_train_dvs].sum()
+        fullweek_pred = (
+            comparison_fullyear_bucketed *
+            (total_felonies_last_month / 4) /
+            total_felonies_last_year
+        ).reset_index()
+        pred = fullweek_pred[
+            fullweek_pred['COMPLAINT_DAYOFWEEK'] ==
+            bucket['COMPLAINT_DAYOFWEEK']
+        ].copy()
         for fld in [
             'COMPLAINT_YEAR',
             'COMPLAINT_MONTH',
             'COMPLAINT_DAY',
-            'COMPLAINT_HOURGROUP',
         ]:
             pred[fld] = bucket[fld]
         preds.append(pred)
