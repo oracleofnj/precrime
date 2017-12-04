@@ -45,14 +45,6 @@ def eval_predictions(X_test, y_test, y_pred):
     ])[crime_types].sum()
     summarize('Days:', y_test_daily, y_pred_daily)
 
-    y_test_monthly = y_test_with_dates.groupby([
-            'COMPLAINT_YEAR', 'COMPLAINT_MONTH', 'ADDR_PCT_CD'
-    ])[crime_types].sum()
-    y_pred_monthly = y_pred.groupby([
-            'COMPLAINT_YEAR', 'COMPLAINT_MONTH', 'ADDR_PCT_CD'
-    ])[crime_types].sum()
-    summarize('Months:', y_test_monthly, y_pred_monthly)
-
     y_test_daily = y_test_with_dates.groupby([
             'COMPLAINT_YEAR', 'COMPLAINT_MONTH', 'COMPLAINT_DAY'
     ])[crime_types].sum()
@@ -60,11 +52,3 @@ def eval_predictions(X_test, y_test, y_pred):
             'COMPLAINT_YEAR', 'COMPLAINT_MONTH', 'COMPLAINT_DAY'
     ])[crime_types].sum()
     summarize('Days (All Precincts):', y_test_daily, y_pred_daily)
-
-    y_test_monthly = y_test_with_dates.groupby([
-            'COMPLAINT_YEAR', 'COMPLAINT_MONTH'
-    ])[crime_types].sum()
-    y_pred_monthly = y_pred.groupby([
-            'COMPLAINT_YEAR', 'COMPLAINT_MONTH'
-    ])[crime_types].sum()
-    summarize('Months (All Precincts):', y_test_monthly, y_pred_monthly)
