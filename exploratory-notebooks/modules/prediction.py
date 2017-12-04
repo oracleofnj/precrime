@@ -26,7 +26,7 @@ def load_all_data():
         precinct_df,
         how='left',
         left_on='ADDR_PCT_CD',
-        right_index=True
+        right_on='Precinct'
     )[[
         'COMPLAINT_YEAR', 'COMPLAINT_MONTH', 'COMPLAINT_DAY',
         'COMPLAINT_HOURGROUP', 'ADDR_PCT_CD', 'COMPLAINT_DAYOFWEEK',
