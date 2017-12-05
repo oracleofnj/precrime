@@ -99,12 +99,12 @@ def filter_raw_data(raw_data, output_file=None):
     raw_data.to_csv(output_file)
 
 
-def save_dated_felonies(output_file=None):
+def save_dated_felonies(data_path=None, orig_file=None, output_file=None):
     """Read the original file, filter it, and save the result."""
     print('Starting ({0})...'.format(
         strftime("%Y-%m-%d %H:%M:%S", localtime())
     ))
-    raw_data = read_orig_file()
+    raw_data = read_orig_file(data_path, orig_file)
     print('Saving filtered output ({0})...'.format(
         strftime("%Y-%m-%d %H:%M:%S", localtime())
     ))
@@ -170,14 +170,14 @@ def load_dated_felonies(data_path=None, filtered_file=None):
     return nypd_data[nypd_data['COMPLAINT_DATETIME'] >= '2006-01-02 00:00:00']
 
 
-def save_clean_felonies(output_file=None):
+def save_clean_felonies(data_path=None, filtered_file=None, output_file=None):
     """Read the filtered file, do more filtering, and save the result."""
     if output_file is None:
         output_file = '../precrime_data/clean_felonies.csv'
     print('Starting ({0})...'.format(
         strftime("%Y-%m-%d %H:%M:%S", localtime())
     ))
-    filtered_felonies = load_dated_felonies()
+    filtered_felonies = load_dated_felonies(data_path, filtered_file)
     print('Done ({0})'.format(strftime("%Y-%m-%d %H:%M:%S", localtime())))
     filtered_felonies.to_csv(output_file)
 

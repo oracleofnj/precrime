@@ -8,11 +8,12 @@ from .nypd_data import load_pivoted_felonies
 from .nyc_shapefiles import load_census_info
 from sklearn.linear_model import Ridge
 
-
-def load_all_data():
+def load_all_data(data_path=None, pivot_file=None
+                  , weather_path='../precrime_data/weather_hist.csv',
+                      local_timezone='America/New_York'):
     """Load all the data, merge it, and return a single dataframe."""
-    weather_hist = load_weather_data()
-    pivoted_felonies = load_pivoted_felonies()
+    weather_hist = load_weather_data(weather_path, local_timezone)
+    pivoted_felonies = load_pivoted_felonies(data_path, pivot_file)
     precinct_df, tract_df, intersection_df = load_census_info()
 
     merged_data = pivoted_felonies.reset_index().merge(
