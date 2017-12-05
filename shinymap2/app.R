@@ -260,21 +260,30 @@ server <- function(input, output) {
       filter(as.Date(nypd$REPORT_DATE,origin = "1970-01-01") >= input$Date_Range[1] & 
                as.Date(nypd$REPORT_DATE,origin = "1970-01-01") <= input$Date_Range[2])       %>%
       filter(OFFENSE %in% input$Crime_Type)
+    # take the subset of nypd data according to crime and date range
     l<-nypd1 %>%
       group_by(ADDR_PCT_CD) %>% 
       summarise(freq=n())
     l$Precinct<-l$ADDR_PCT_CD
-    months<-as.double(difftime(input$Date_Range[2],input$Date_Range[1],units = 'days'))/30
-    precincts@data['12','Population']=1000
+    # merge with the spatial data frame of precincts
+    precincts@data<-merge(precincts@data,l, by='Precinct', all.x=T, all.y=T,sort=T)
     
-    print(precincts@data$Population)
+    months<-as.double(difftime(input$Date_Range[2],input$Date_Range[1],units = 'days'))/30
     precincts@data$months=months
     
-    precincts@data<-merge(precincts@data,l, by='Precinct')
+    # set the population of central park to 1000 for smoother gradation
+    index<-precincts@data$Precinct==22
+    
+    precincts@data$Population[index]=1000
+   
+    print(precincts@data$Population)
+    
+    precincts@data$freq[is.na(precincts@data$freq)] <- 0
+    
+    # data modification for plotting
     precincts@data['pop_by_100k']<-precincts@data['Population']/100000
     precincts@data['v1']<- precincts@data['freq']/ precincts@data['pop_by_100k']
     precincts@data['value']<- precincts@data['v1']/ precincts@data['months']
-    #precincts@data['value']<- precincts@data['freq']/ 10
     print(precincts@data)
    
     ###################
