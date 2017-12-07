@@ -112,7 +112,7 @@ def save_dated_felonies(data_path=None, orig_file=None, output_file=None):
     print('Done ({0})'.format(strftime("%Y-%m-%d %H:%M:%S", localtime())))
 
 
-def load_dated_felonies(data_path=None, filtered_file=None):
+def load_dated_felonies(data_path=None, filtered_file=None, datetime='2006-01-02 00:00:00' ):
     """Load in the file that has been filtered for valid dates."""
     filtered_file_defaults = {
         'data_path': '../precrime_data/',
@@ -167,7 +167,7 @@ def load_dated_felonies(data_path=None, filtered_file=None):
     )
     nypd_data.dropna(subset=['COMPLAINT_DATETIME'])
     # Exclude weird data on 2006-01-01.
-    return nypd_data[nypd_data['COMPLAINT_DATETIME'] >= '2006-01-02 00:00:00']
+    return nypd_data[nypd_data['COMPLAINT_DATETIME'] >= datetime]
 
 
 def save_clean_felonies(data_path=None, filtered_file=None, output_file=None):
@@ -385,7 +385,28 @@ def load_pivoted_felonies(data_path=None, pivot_file=None):
         pivot_file = pivot_file_defaults['pivot_file']
     pivoted = pd.read_csv(
         data_path + pivot_file,
-        index_col=[0, 1, 2, 3, 4]
+        index_col=[0, 1, 2, 3, 4],
+        dtype={'ADDR_PCT_CD': int,
+     'Arson': int,
+     'Burglary': int,
+     'COMPLAINT_DAY': int,
+     'COMPLAINT_DAYOFWEEK': int,
+     'COMPLAINT_HOURGROUP': int,
+     'COMPLAINT_IDS': str,
+     'COMPLAINT_MONTH': int,
+     'COMPLAINT_YEAR': int,
+     'CriminalMischief': int,
+     'Drugs': int,
+     'FelonyAssault': int,
+     'Forgery': int,
+     'Fraud': int,
+     'GrandLarceny': int,
+     'GrandLarcenyAuto': int,
+     'Homicide': int,
+     'Other': int,
+     'Rape': int,
+     'Robbery': int,
+     'Weapons': int}
     )
     pivoted['COMPLAINT_IDS'] = pivoted['COMPLAINT_IDS'].fillna(value='')
     return pivoted

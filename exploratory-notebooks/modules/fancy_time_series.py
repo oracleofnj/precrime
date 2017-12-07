@@ -58,52 +58,59 @@ def fancy_time_series_model(X_train, y_train, X_test, y_test):
     preds = []
     y_train_dvs = y_train.select_dtypes(exclude=['object']).columns
     for index, bucket in buckets.iterrows():
-        comparison_fullyear = all_all[
-            (all_all['DECIMAL_DATE'] >= get_52_weeks_ago(
-                bucket['COMPLAINT_YEAR'],
-                bucket['COMPLAINT_MONTH'],
-                bucket['COMPLAINT_DAY'])) &
-            (all_all['DECIMAL_DATE'] < get_one_decimal_date(
-                bucket['COMPLAINT_YEAR'],
-                bucket['COMPLAINT_MONTH'],
-                bucket['COMPLAINT_DAY']))
-        ]
-        total_felonies_last_year = np.sum(
-            comparison_fullyear[y_train_dvs].values
-        )
-        comparison_lastmonth = all_all[
-            (all_all['DECIMAL_DATE'] >= get_4_weeks_ago(
-                bucket['COMPLAINT_YEAR'],
-                bucket['COMPLAINT_MONTH'],
-                bucket['COMPLAINT_DAY'])) &
-            (all_all['DECIMAL_DATE'] < get_one_decimal_date(
-                bucket['COMPLAINT_YEAR'],
-                bucket['COMPLAINT_MONTH'],
-                bucket['COMPLAINT_DAY']))
-        ]
-        total_felonies_last_month = np.sum(
-            comparison_lastmonth[y_train_dvs].values
-        )
-
-        comparison_fullyear_bucketed = comparison_fullyear.groupby([
-            'COMPLAINT_DAYOFWEEK', 'COMPLAINT_HOURGROUP', 'ADDR_PCT_CD'
-        ])[y_train_dvs].sum()
-        fullweek_pred = (
-            comparison_fullyear_bucketed *
-            (total_felonies_last_month / 4) /
-            total_felonies_last_year
-        ).reset_index()
-        pred = fullweek_pred[
-            fullweek_pred['COMPLAINT_DAYOFWEEK'] ==
-            bucket['COMPLAINT_DAYOFWEEK']
-        ].copy()
-        for fld in [
-            'COMPLAINT_YEAR',
-            'COMPLAINT_MONTH',
-            'COMPLAINT_DAY',
-        ]:
-            pred[fld] = bucket[fld]
-        preds.append(pred)
+        try:
+            comparison_fullyear = all_all[
+                (all_all['DECIMAL_DATE'] >= pd.Timestamp(get_52_weeks_ago(
+                    bucket['COMPLAINT_YEAR'],
+                    bucket['COMPLAINT_MONTH'],
+                    bucket['COMPLAINT_DAY']))) &
+                (all_all['DECIMAL_DATE'] < pd.Timestamp(get_one_decimal_date(
+                    bucket['COMPLAINT_YEAR'],
+                    bucket['COMPLAINT_MONTH'],
+                    bucket['COMPLAINT_DAY'])))
+            ]
+            total_felonies_last_year = np.sum(
+                comparison_fullyear[y_train_dvs].values
+            )
+            comparison_lastmonth = all_all[
+                (all_all['DECIMAL_DATE'] >= pd.Timestamp(get_4_weeks_ago(
+                    bucket['COMPLAINT_YEAR'],
+                    bucket['COMPLAINT_MONTH'],
+                    bucket['COMPLAINT_DAY']))) &
+                (all_all['DECIMAL_DATE'] < pd.Timestamp(get_one_decimal_date(
+                    bucket['COMPLAINT_YEAR'],
+                    bucket['COMPLAINT_MONTH'],
+                    bucket['COMPLAINT_DAY'])))
+            ]
+            total_felonies_last_month = np.sum(
+                comparison_lastmonth[y_train_dvs].values
+            )
+    
+            comparison_fullyear_bucketed = comparison_fullyear.groupby([
+                'COMPLAINT_DAYOFWEEK', 'COMPLAINT_HOURGROUP', 'ADDR_PCT_CD'
+            ])[y_train_dvs].sum()
+            fullweek_pred = (
+                comparison_fullyear_bucketed *
+                (total_felonies_last_month / 4) /
+                total_felonies_last_year
+            ).reset_index()
+            pred = fullweek_pred[
+                fullweek_pred['COMPLAINT_DAYOFWEEK'] ==
+                bucket['COMPLAINT_DAYOFWEEK']
+            ].copy()
+            for fld in [
+                'COMPLAINT_YEAR',
+                'COMPLAINT_MONTH',
+                'COMPLAINT_DAY',
+            ]:
+                pred[fld] = bucket[fld]
+            preds.append(pred)
+        except:
+            print(type(get_52_weeks_ago(
+                    bucket['COMPLAINT_YEAR'],
+                    bucket['COMPLAINT_MONTH'],
+                    bucket['COMPLAINT_DAY'])), type(list(all_all['DECIMAL_DATE'])[0]))
+            break
     all_preds = pd.concat(preds)
     return y_pred.reset_index().merge(
         all_preds,
