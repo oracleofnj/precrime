@@ -36,23 +36,27 @@ library(gridExtra)
 
 #data prepare
 
-nypd <- read_csv("../precrime_data/clean_felonies_offense.csv", col_types = cols(Date = col_date(format = "%m/%d/%Y"), Time = col_character()))
+nypd <- read_csv("clean_felonies_new_processed.csv", col_types = cols(Date = col_date(format = "%m/%d/%Y"), Time = col_character()))
 #nypd$OFFENSE<-nypd$OFNS_DESC
-nypd$Year=format(nypd$COMPLAINT_DATETIME,"%Y")
-nypd$Month=format(nypd$COMPLAINT_DATETIME,"%m")
-nypd$Day=format(nypd$COMPLAINT_DATETIME,"%d")
-nypd<-na.omit(nypd, cols=c('Longitude', 'Latitude'))
-clean_felonies_offense_new <- read_csv("../precrime_data/clean_felonies_new.csv", col_types = cols(Date = col_date(format = "%m/%d/%Y"), Time = col_character()))
-pivot_felonies <- read_csv("../precrime_data/pivoted_felonies.csv")
-
-pred_17<-read_csv("../precrime_data/final_2017_predictions.csv")
+nypd$Year=format(nypd$REPORT_DATE,"%Y")
+nypd$Month=format(nypd$REPORT_DATE,"%m")
+nypd$Day=format(nypd$REPORT_DATE,"%d")
+pivoted_felonies <- read_csv("pivoted_felonies.csv")
+#nypd_all<-nypd
+#nypd<-na.omit(nypd, cols=c('Longitude', 'Latitude'))
+pred_17<-read_csv("final_2017_predictions.csv")
 pred_17$date<-as.Date(with(pred_17, paste(COMPLAINT_YEAR, COMPLAINT_MONTH, COMPLAINT_DAY,sep="-")), "%Y-%m-%d")
+pivoted_felonies$date<-as.Date(with(pivoted_felonies, paste(COMPLAINT_YEAR, COMPLAINT_MONTH, COMPLAINT_DAY,sep="-")), "%Y-%m-%d")
+pivoted_felonies$All<-pivoted_felonies$Arson + pivoted_felonies$Burglary + 
+  pivoted_felonies$CriminalMischief + pivoted_felonies$Drugs + pivoted_felonies$FelonyAssault + 
+  pivoted_felonies$Forgery + pivoted_felonies$Fraud + pivoted_felonies$GrandLarceny + 
+  pivoted_felonies$GrandLarcenyAuto + pivoted_felonies$Homicide + pivoted_felonies$Rape + pivoted_felonies$Robbery + 
+  pivoted_felonies$Weapons + pivoted_felonies$Other
 pred_17$All<-pred_17$Arson + pred_17$Burglary + 
   pred_17$CriminalMischief + pred_17$Drugs + pred_17$FelonyAssault + 
   pred_17$Forgery + pred_17$Fraud + pred_17$GrandLarceny + 
   pred_17$GrandLarcenyAuto + pred_17$Homicide + pred_17$Rape + pred_17$Robbery + 
   pred_17$Weapons + pred_17$Other
-
 ts <- nypd %>% group_by(Year) %>% summarise(Total_Crimes=n())
 ts2 <- nypd %>% group_by(OFFENSE,Year) %>% summarise(count1=n())
 ts_month <- nypd %>% group_by(OFFENSE,Month) %>% summarise(count1=n())
@@ -67,7 +71,7 @@ Crime_Per_Month <- ts_month
 
 
 
-precincts <- geojsonio::geojson_read('../precrime_data/nypd_precincts.geojson', what='sp')
+precincts <- geojsonio::geojson_read('nypd_precincts.geojson', what='sp')
 
 
 precincts_pred<-precincts
@@ -79,17 +83,15 @@ ui <- dashboardPage(
   dashboardSidebar(
     sidebarMenu(
       menuItem("Crime Map", tabName = "crime", icon = icon("map-marker")),
-      menuItem("Time Series Analysis", tabName = "dashboard", icon = icon("dashboard")),  
-      menuItem("Complaint Analysis", tabName = "complaint", icon = icon("bar-chart")),
-
-
+      #menuItem("Time Series Analysis", tabName = "dashboard", icon = icon("dashboard")),  
+      #menuItem("Population Map", tabName = "population", icon = icon("map-marker")),
+      #menuItem("Complaint Analysis", tabName = "complaint", icon = icon("bar-chart")),
+      menuItem("Prediction Map", tabName = "prediction", icon = icon("map-marker")),
+      menuItem("Model Evaluation", tabName = "evaluation", icon = icon("bar-chart")),
       menuItem("Grand Larceny Prediction", tabName = "grandlarceny", icon = icon("line-chart")),
-      menuItem("Fenoly Assault Prediction", tabName = "FenolyAssault", icon = icon("line-chart")),
+      menuItem("Felony Assault Prediction", tabName = "FenolyAssault", icon = icon("line-chart")),
       menuItem("Robbery Prediction", tabName = "robbery", icon = icon("line-chart")),
       menuItem("Burglary Prediction", tabName = "burglary", icon = icon("line-chart")),
-
-      menuItem("Prediction", tabName = "prediction", icon = icon("map-marker")),
-
       menuItem("Report data", tabName = "rawdata", icon = icon("table"))
     )
   ),
@@ -112,7 +114,49 @@ ui <- dashboardPage(
                     plotOutput("plot4")))
               
       ),
+      tabItem(tabName = "grandlarceny",
+              #h2("Grand Larceny Prediction vs True Value"),
+              
+              fluidPage(
+                titlePanel("Grand Larceny Prediction vs True Value!"),
+                mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/jS5dGeqVTHc" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
+                )
+              )
+      ),
+      tabItem(tabName = "FenolyAssault",
+              fluidPage(
+                titlePanel("Felony Assault Prediction vs True Value!"),
+                mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/l5-U4d1LSM0" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
+                )
+              )
+      ),  
       
+      tabItem(tabName = "burglary",
+              fluidPage(
+                titlePanel("Burglary Prediction vs True Value!"),
+                mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/U-S6jQjO9wI" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
+                )
+              )
+      ),  
+      
+      tabItem(tabName = "robbery",
+              fluidPage(
+                titlePanel("Bobbery Prediction vs True Value!"),
+                mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/i8_ON1Hojlg" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
+                )
+              )
+      ),
+      
+      tabItem(tabName = "population",
+              h2("Population Map"),
+              
+              box(
+                title = "Population Map",
+                collapsible = TRUE,
+                width = "100%",
+                height = "100%",
+                leafletOutput("population_map",height=670)
+              )),
       
       
       tabItem(tabName = "complaint",
@@ -134,17 +178,6 @@ ui <- dashboardPage(
               
               h2("Detailed Analysis")),
       
-
-              tabItem(tabName = "grandlarceny",
-                      #h2("Grand Larceny Prediction vs True Value"),
-                      
-                      fluidPage(
-                        titlePanel("Grand Larceny Prediction vs True Value!"),
-                        mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/jS5dGeqVTHc" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
-                        )
-                      )
-              ),  
-
       tabItem(tabName = "prediction",
               #h2("Crime Map"),
               
@@ -176,33 +209,40 @@ ui <- dashboardPage(
                 )
                 
               )),
-
+      tabItem(tabName = "evaluation",
+              #h2("Crime Map"),
+              
+              box(
+                #title = "Crime Map",
+                collapsible = TRUE,
+                width = "100%",
+                height = "100%",
+                plotOutput("evaluation_result",height=670),
+                absolutePanel(top = 10, right = 10,
+                              # widget for crime type
+                              selectInput("Crime_Type_eval", 
+                                          label = "Crime Type",
+                                          choices = c("Arson", "Burglary","CriminalMischief","Drugs","FelonyAssault","Forgery","Fraud","GrandLarceny","GrandLarcenyAuto","Homicide","Rape","Robbery", "Weapons" ,"Other", "All" ),
+                                          selected = "All"
+                              ),
+                              selectInput("Precinct_eval", 
+                                          label = "Precinct Code",
+                                          choices = c(1,5,6,7,9,10,13:14,17:20, 22,23, 24:26,28,30,32:34,40:50,52,60:63,66:73,75:79,81,83:84,88,90,94,100:115,120:123),
+                                          selected = 42
+                              ),
+                              
+                              #date range
+                              dateRangeInput("Date_Range_eval", "Choose a Date Range", 
+                                             start = "2017-01-01", end = "2017-01-31", 
+                                             min = "2017-01-01", max = "2017-12-31")
+                              
+                              #update button
+                              #actionButton("button", "Go", 
+                              #             style="color: #fff; background-color: #337ab7; border-color: #2e6da4")
+                )
+                
+              )),
       
-            
-      tabItem(tabName = "FenolyAssault",
-                fluidPage(
-                titlePanel("Fenoly Assault Prediction vs True Value!"),
-                mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/l5-U4d1LSM0" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
-                        )
-                      )
-              ),  
-      
-      tabItem(tabName = "burglary",
-              fluidPage(
-                titlePanel("Burglary Prediction vs True Value!"),
-                mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/U-S6jQjO9wI" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
-                        )
-    )
-    ),  
-      
-    tabItem(tabName = "robbery",
-            fluidPage(
-              titlePanel("Bobbery Prediction vs True Value!"),
-              mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/i8_ON1Hojlg" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
-              )
-            )
-    ),  
-
       tabItem(tabName = "rawdata",
               #h2("Crime Amount Per Month Data"),
               fluidPage(
@@ -255,8 +295,8 @@ ui <- dashboardPage(
                               
                               #date range
                               dateRangeInput("Date_Range", "Choose a Date Range", 
-                                             start = "2016-10-01", end = "2016-12-31", 
-                                             min = "2006-01-02", max = "2016-12-31")
+                                             start = "2015-10-01", end = "2017-09-30", 
+                                             min = "2006-01-02", max = "2017-09-30")
                               
                               #update button
                               #actionButton("button", "Go", 
@@ -268,7 +308,7 @@ ui <- dashboardPage(
     )
   ))
 
-server <- function(input, output, session) {
+server <- function(input, output) {
   
   # Generate a plot of the requested variable against mpg and only 
   # include outliers if requested
@@ -322,11 +362,11 @@ server <- function(input, output, session) {
     
     crime_type<-reactive({crime_type<-input$Crime_Type
     })
-    
+    nypd_na<-na.omit(nypd, cols=c('Longitude', 'Latitude'))
     # subsets the crime data depending on user input in the Shiny app
-    filtered_crime_data <- reactive({nypd %>% 
-        filter(as.Date(nypd$REPORT_DATE,origin = "1970-01-01") >= start_date() & 
-                 as.Date(nypd$REPORT_DATE,origin = "1970-01-01") <= end_date())       %>%
+    filtered_crime_data <- reactive({nypd_na %>% 
+        filter(as.Date(nypd_na$REPORT_DATE,origin = "1970-01-01") >= start_date() & 
+                 as.Date(nypd_na$REPORT_DATE,origin = "1970-01-01") <= end_date())       %>%
         filter(OFFENSE %in% crime_type())
     })
     ####################
@@ -403,7 +443,7 @@ server <- function(input, output, session) {
     ####widget
     leaflet(data = filtered_crime_data()) %>% 
       addProviderTiles('Stamen.TonerLite') %>% 
-      setView(lng = -73.971035, lat = 40.775659, zoom = 12) %>% 
+      setView(lng = -73.971035, lat = 40.775659, zoom = 10) %>% 
       addPolygons(data=precincts,
                   fillColor = ~pal_1(precincts$value),
                   weight=2,
@@ -462,6 +502,7 @@ server <- function(input, output, session) {
       #filter(as.numeric(pred_17$COMPLAINT_HOURGROUP)>=input$Time_Range_pred[1] &
                #as.numeric(pred_17$COMPLAINT_HOURGROUP)<=input$Time_Range_pred[2] )
     # take the subset of nypd data according to crime and date range
+    pred_17_1<-pred_17_1[ , -which(names(pred_17_1) %in% c("COMPLAINT_DAYOFWEEK", "X1"))]
     print(pred_17_1)
     l_pred<-pred_17_1 %>%
       group_by(ADDR_PCT_CD) %>% 
@@ -491,7 +532,7 @@ server <- function(input, output, session) {
     # data modification for plotting
     precincts_pred@data['pop_by_100k']<-precincts_pred@data['Population']/100000
     precincts_pred@data['v1']<- precincts_pred@data[input$Crime_Type]/ precincts_pred@data['pop_by_100k']
-    precincts_pred@data['value']<- precincts_pred@data['v1']/ precincts_pred@data['hours']
+    precincts_pred@data['value']<- precincts_pred@data['v1']/ precincts_pred@data['months']
     #print(precincts_pred@data)
     
     ###################
@@ -536,9 +577,11 @@ server <- function(input, output, session) {
     
 
     ####widget
+    
+    state_popup <- paste0("<strong>Name of the country </strong>")
     leaflet(data = precincts_pred) %>% 
       addProviderTiles('Stamen.TonerLite') %>% 
-      setView(lng = -73.971035, lat = 40.775659, zoom = 12) %>% 
+      setView(lng = -73.971035, lat = 40.775659, zoom = 10) %>% 
       addPolygons(
                   fillColor = ~pal_1(precincts_pred$value),
                   weight=2,
@@ -548,6 +591,7 @@ server <- function(input, output, session) {
                   fillOpacity = 0.7,
                   highlight=highlight,
                   label=labels,
+                  popup = 'Predicted v/s Absolute' ,
                   labelOptions = labelopts
       )%>%
       #addCircles(lng=~lng, lat=~lat, radius=40, 
@@ -556,10 +600,91 @@ server <- function(input, output, session) {
       #                         "Precinct: ",  ADDR_PCT_CD 
       #))) %>%
       leaflet::addLegend("bottomleft", pal = pal_1, values = precincts_pred$value,
-                         title = "crime per 4 hours per 100k pop",
+                         title = "crime per month per 100k pop",
                          opacity = 1 )#%>%
       #addMarkers(
         #clusterOptions = markerClusterOptions())
+    #observe({
+      #leafletProxy("map") %>% clearPopups()
+      #event <- input$map_shape_click
+      #if (is.null(event))
+       # return()
+      
+   # print(event)
+   # })
+  })
+  
+  
+  #####Evaluation 
+  output$evaluation_result <- renderPlot({
+    
+    #### Map ######################################################################
+    
+    #read and update the input data
+    start_date<-reactive({input$Date_Range_eval[1]
+    })
+    
+    end_date<-reactive({input$Date_Range_eval[2]
+    })
+    
+    crime_type<-reactive({crime_type<-input$Crime_Type_eval
+    })
+    precinct_cd<-reactive({precinct_cd<-input$Precinct_eval
+    })
+    
+    
+    
+    ####################
+    pred_17_1<-pred_17 %>% 
+      filter(as.Date(pred_17$date,origin = "1970-01-01") >= as.Date(input$Date_Range_pred[1]) & 
+               as.Date(pred_17$date,origin = "1970-01-01") <= as.Date(input$Date_Range_pred[2])
+             ) %>%
+      filter(ADDR_PCT_CD %in%input$Precinct_eval )
+     
+    
+    pred_17_1$idx<-paste(pred_17_1$COMPLAINT_YEAR, pred_17_1$COMPLAINT_MONTH, pred_17_1$DAY, pred_17_1$COMPLAINT_HOURGROUP, pred_17_1$ADDR_PCT_CD)
+    pred_17_1<-pred_17_1[ , which(names(pred_17_1) %in% c("idx", input$Crime_Type_eval))]
+    
+    actual_17_1<-pivoted_felonies %>% 
+      filter(as.Date(pivoted_felonies$date,origin = "1970-01-01") >= as.Date(input$Date_Range_pred[1]) & 
+               as.Date(pivoted_felonies$date,origin = "1970-01-01") <= as.Date(input$Date_Range_pred[2]) ) %>%
+      filter(ADDR_PCT_CD %in% input$Precinct_eval)
+    actual_17_1$idx<-paste(actual_17_1$COMPLAINT_YEAR, actual_17_1$COMPLAINT_MONTH, actual_17_1$DAY, actual_17_1$COMPLAINT_HOURGROUP, actual_17_1$ADDR_PCT_CD)
+    actual_17_1<-actual_17_1[ , which(names(actual_17_1) %in% c("idx", input$Crime_Type_eval))]
+    colnames(actual_17_1) <- paste0("actual_",colnames(actual_17_1))
+    actual_17_1$idx<-actual_17_1$actual_idx
+    print(pred_17_1)
+    print(actual_17_1)
+    
+    combined_data<-merge(pred_17_1,actual_17_1, by='idx')
+    pred_name=input$Crime_Type_eval
+    act_name=paste0('actual_',input$Crime_Type_eval)
+    combined_data<-combined_data[ , which(names(combined_data) %in% c(pred_name,act_name))]
+    
+    
+    
+    
+    
+    print(combined_data)
+    
+
+    ####widget
+    #plot(combined_data)
+    plot(combined_data[,1:2]) #, main="Scatterplot Example", 
+         #xlab="Predicted Values ", ylab="Actual Values ")
+    #p<-ggplot(combined_data) + geom_point(aes(x=combined_data[pred_name], y=combined_data[act_name])) + xlab('Predicted Values') +ylab('Actual Values')
+    #print(p)
+    
+    #addMarkers(
+    #clusterOptions = markerClusterOptions())
+    #observe({
+    #leafletProxy("map") %>% clearPopups()
+    #event <- input$map_shape_click
+    #if (is.null(event))
+    # return()
+    
+    # print(event)
+    # })
   })
   #########raw data###########
   # Reactive value for selected dataset ----
