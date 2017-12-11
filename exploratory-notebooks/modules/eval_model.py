@@ -33,8 +33,19 @@ def eval_predictions(X_test, y_test, y_pred):
     y_test_with_dates = y_test.merge(
         X_test[[
             'COMPLAINT_YEAR', 'COMPLAINT_MONTH',
-            'COMPLAINT_DAY', 'ADDR_PCT_CD'
+            'COMPLAINT_DAY', 'COMPLAINT_HOURGROUP',
+            'ADDR_PCT_CD'
         ]], left_index=True, right_index=True
+    )
+
+    y_test_across_precincts = y_test_with_dates.groupby([
+        'COMPLAINT_YEAR', 'COMPLAINT_MONTH', 'COMPLAINT_DAY', 'COMPLAINT_HOURGROUP'
+    ])[crime_types].sum()
+    y_pred_across_precincts = y_pred.groupby([
+        'COMPLAINT_YEAR', 'COMPLAINT_MONTH', 'COMPLAINT_DAY', 'COMPLAINT_HOURGROUP'
+    ])[crime_types].sum()
+    summarize('Four-hour buckets (All Precincts):',
+        y_test_across_precincts, y_pred_across_precincts
     )
 
     y_test_daily = y_test_with_dates.groupby([
