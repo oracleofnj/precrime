@@ -42,13 +42,17 @@ nypd$Year=format(nypd$COMPLAINT_DATETIME,"%Y")
 nypd$Month=format(nypd$COMPLAINT_DATETIME,"%m")
 nypd$Day=format(nypd$COMPLAINT_DATETIME,"%d")
 nypd<-na.omit(nypd, cols=c('Longitude', 'Latitude'))
-pred_17<-read_csv("../model_predictions/2016/final_2017_predictions.csv")
+clean_felonies_offense_new <- read_csv("../precrime_data/clean_felonies_new.csv", col_types = cols(Date = col_date(format = "%m/%d/%Y"), Time = col_character()))
+pivot_felonies <- read_csv("../precrime_data/pivoted_felonies.csv")
+
+pred_17<-read_csv("../precrime_data/final_2017_predictions.csv")
 pred_17$date<-as.Date(with(pred_17, paste(COMPLAINT_YEAR, COMPLAINT_MONTH, COMPLAINT_DAY,sep="-")), "%Y-%m-%d")
 pred_17$All<-pred_17$Arson + pred_17$Burglary + 
   pred_17$CriminalMischief + pred_17$Drugs + pred_17$FelonyAssault + 
   pred_17$Forgery + pred_17$Fraud + pred_17$GrandLarceny + 
   pred_17$GrandLarcenyAuto + pred_17$Homicide + pred_17$Rape + pred_17$Robbery + 
   pred_17$Weapons + pred_17$Other
+
 ts <- nypd %>% group_by(Year) %>% summarise(Total_Crimes=n())
 ts2 <- nypd %>% group_by(OFFENSE,Year) %>% summarise(count1=n())
 ts_month <- nypd %>% group_by(OFFENSE,Month) %>% summarise(count1=n())
@@ -76,9 +80,16 @@ ui <- dashboardPage(
     sidebarMenu(
       menuItem("Crime Map", tabName = "crime", icon = icon("map-marker")),
       menuItem("Time Series Analysis", tabName = "dashboard", icon = icon("dashboard")),  
-      #menuItem("Population Map", tabName = "population", icon = icon("map-marker")),
       menuItem("Complaint Analysis", tabName = "complaint", icon = icon("bar-chart")),
+
+
+      menuItem("Grand Larceny Prediction", tabName = "grandlarceny", icon = icon("line-chart")),
+      menuItem("Fenoly Assault Prediction", tabName = "FenolyAssault", icon = icon("line-chart")),
+      menuItem("Robbery Prediction", tabName = "robbery", icon = icon("line-chart")),
+      menuItem("Burglary Prediction", tabName = "burglary", icon = icon("line-chart")),
+
       menuItem("Prediction", tabName = "prediction", icon = icon("map-marker")),
+
       menuItem("Report data", tabName = "rawdata", icon = icon("table"))
     )
   ),
@@ -102,16 +113,6 @@ ui <- dashboardPage(
               
       ),
       
-      tabItem(tabName = "population",
-              h2("Population Map"),
-              
-              box(
-                title = "Population Map",
-                collapsible = TRUE,
-                width = "100%",
-                height = "100%",
-                leafletOutput("population_map",height=670)
-              )),
       
       
       tabItem(tabName = "complaint",
@@ -133,6 +134,17 @@ ui <- dashboardPage(
               
               h2("Detailed Analysis")),
       
+
+              tabItem(tabName = "grandlarceny",
+                      #h2("Grand Larceny Prediction vs True Value"),
+                      
+                      fluidPage(
+                        titlePanel("Grand Larceny Prediction vs True Value!"),
+                        mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/jS5dGeqVTHc" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
+                        )
+                      )
+              ),  
+
       tabItem(tabName = "prediction",
               #h2("Crime Map"),
               
@@ -164,7 +176,33 @@ ui <- dashboardPage(
                 )
                 
               )),
+
       
+            
+      tabItem(tabName = "FenolyAssault",
+                fluidPage(
+                titlePanel("Fenoly Assault Prediction vs True Value!"),
+                mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/l5-U4d1LSM0" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
+                        )
+                      )
+              ),  
+      
+      tabItem(tabName = "burglary",
+              fluidPage(
+                titlePanel("Burglary Prediction vs True Value!"),
+                mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/U-S6jQjO9wI" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
+                        )
+    )
+    ),  
+      
+    tabItem(tabName = "robbery",
+            fluidPage(
+              titlePanel("Bobbery Prediction vs True Value!"),
+              mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/i8_ON1Hojlg" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
+              )
+            )
+    ),  
+
       tabItem(tabName = "rawdata",
               #h2("Crime Amount Per Month Data"),
               fluidPage(
@@ -230,7 +268,7 @@ ui <- dashboardPage(
     )
   ))
 
-server <- function(input, output) {
+server <- function(input, output, session) {
   
   # Generate a plot of the requested variable against mpg and only 
   # include outliers if requested
