@@ -89,9 +89,9 @@ ui <- dashboardPage(
       menuItem("Prediction Map", tabName = "prediction", icon = icon("map-marker")),
       menuItem("Model Evaluation", tabName = "evaluation", icon = icon("bar-chart")),
       menuItem("Grand Larceny Prediction", tabName = "grandlarceny", icon = icon("line-chart")),
-      menuItem("Felony Assault Prediction", tabName = "FenolyAssault", icon = icon("line-chart")),
-      menuItem("Robbery Prediction", tabName = "robbery", icon = icon("line-chart")),
-      menuItem("Burglary Prediction", tabName = "burglary", icon = icon("line-chart")),
+      menuItem("Homicide Prediction", tabName = "Homicide", icon = icon("line-chart")),
+      menuItem("Fraud Prediction", tabName = "Fraud", icon = icon("line-chart")),
+      #menuItem("Burglary Prediction", tabName = "burglary", icon = icon("line-chart")),
       menuItem("Report data", tabName = "rawdata", icon = icon("table"))
     )
   ),
@@ -119,33 +119,25 @@ ui <- dashboardPage(
               
               fluidPage(
                 titlePanel("Grand Larceny Prediction vs True Value!"),
-                mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/jS5dGeqVTHc" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
+                mainPanel( img( src="GrandLarceny_month_6.png", width=900, height=700) )
                 )
               )
-      ),
-      tabItem(tabName = "FenolyAssault",
+        ,
+      tabItem(tabName = "Homicide",
               fluidPage(
-                titlePanel("Felony Assault Prediction vs True Value!"),
-                mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/l5-U4d1LSM0" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
-                )
+                titlePanel("Homicide Prediction vs True Value!"),
+                mainPanel( img( src="Homicide_month_6.png", width=900, height=700) )                
               )
       ),  
       
-      tabItem(tabName = "burglary",
+      tabItem(tabName = "Fraud",
               fluidPage(
-                titlePanel("Burglary Prediction vs True Value!"),
-                mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/U-S6jQjO9wI" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
-                )
+                titlePanel("Fraud Prediction vs True Value!"),
+                mainPanel( img( src="Fraud_month_6.png", width=900, height=700) )                
               )
       ),  
       
-      tabItem(tabName = "robbery",
-              fluidPage(
-                titlePanel("Bobbery Prediction vs True Value!"),
-                mainPanel( HTML('<iframe width="700" height="700" src="https://www.youtube.com/embed/i8_ON1Hojlg" frameborder="0" gesture="media" allow="encrypted-media" allowfullscreen></iframe>')
-                )
-              )
-      ),
+      
       
       tabItem(tabName = "population",
               h2("Population Map"),
@@ -217,7 +209,7 @@ ui <- dashboardPage(
                 collapsible = TRUE,
                 width = "100%",
                 height = "100%",
-                plotOutput("evaluation_result",height=670),
+                plotOutput("evaluation_result",height=600, hover=hoverOpts(id="plot_hover")),
                 absolutePanel(top = 10, right = 10,
                               # widget for crime type
                               selectInput("Crime_Type_eval", 
@@ -617,7 +609,13 @@ server <- function(input, output) {
   
   #####Evaluation 
   output$evaluation_result <- renderPlot({
-    
+    get_density <- function(x, y, n = 100) {
+      dens <- MASS::kde2d(x = x, y = y, n = n)
+      ix <- findInterval(x, dens$x)
+      iy <- findInterval(y, dens$y)
+      ii <- cbind(ix, iy)
+      return(dens$z[ii])
+    }
     #### Map ######################################################################
     
     #read and update the input data
@@ -636,8 +634,8 @@ server <- function(input, output) {
     
     ####################
     pred_17_1<-pred_17 %>% 
-      filter(as.Date(pred_17$date,origin = "1970-01-01") >= as.Date(input$Date_Range_pred[1]) & 
-               as.Date(pred_17$date,origin = "1970-01-01") <= as.Date(input$Date_Range_pred[2])
+      filter(as.Date(pred_17$date,origin = "1970-01-01") >= as.Date(input$Date_Range_eval[1]) & 
+               as.Date(pred_17$date,origin = "1970-01-01") <= as.Date(input$Date_Range_eval[2])
              ) %>%
       filter(ADDR_PCT_CD %in%input$Precinct_eval )
      
@@ -646,8 +644,8 @@ server <- function(input, output) {
     pred_17_1<-pred_17_1[ , which(names(pred_17_1) %in% c("idx", input$Crime_Type_eval))]
     
     actual_17_1<-pivoted_felonies %>% 
-      filter(as.Date(pivoted_felonies$date,origin = "1970-01-01") >= as.Date(input$Date_Range_pred[1]) & 
-               as.Date(pivoted_felonies$date,origin = "1970-01-01") <= as.Date(input$Date_Range_pred[2]) ) %>%
+      filter(as.Date(pivoted_felonies$date,origin = "1970-01-01") >= as.Date(input$Date_Range_eval[1]) & 
+               as.Date(pivoted_felonies$date,origin = "1970-01-01") <= as.Date(input$Date_Range_eval[2]) ) %>%
       filter(ADDR_PCT_CD %in% input$Precinct_eval)
     actual_17_1$idx<-paste(actual_17_1$COMPLAINT_YEAR, actual_17_1$COMPLAINT_MONTH, actual_17_1$DAY, actual_17_1$COMPLAINT_HOURGROUP, actual_17_1$ADDR_PCT_CD)
     actual_17_1<-actual_17_1[ , which(names(actual_17_1) %in% c("idx", input$Crime_Type_eval))]
@@ -660,17 +658,37 @@ server <- function(input, output) {
     pred_name=input$Crime_Type_eval
     act_name=paste0('actual_',input$Crime_Type_eval)
     combined_data<-combined_data[ , which(names(combined_data) %in% c(pred_name,act_name))]
+    colnames(combined_data)<-c("Predicted","Actual" )
     
     
+   tryCatch({
+     combined_data$density <- get_density(combined_data$Predicted, combined_data$Actual)
+     
+      p <- ggplot(combined_data)+ geom_point(aes(Predicted, Actual, color=density))+ scale_color_viridis()
+      print(p)
+      
+    }, warning = function(war) {
+      
+      p <- ggplot(combined_data)+ geom_point(aes(Predicted, Actual), alpha=0.4)
+      print(p)
+      
+    }, error = function(err) {
+      
+     p <- ggplot(combined_data)+ geom_point(aes(Predicted, Actual), alpha=0.4)
+     print(p)
+     
+    })
     
-    
-    
-    print(combined_data)
     
 
     ####widget
     #plot(combined_data)
-    plot(combined_data[,1:2]) #, main="Scatterplot Example", 
+    #showplot1 <- function(indata, inx, iny){
+      #p <- ggplot(combined_data)+ geom_point(aes(Predicted, Actual, color=density))+ scale_color_viridis()
+                  
+   # print(p)
+    
+    #plot(combined_data[,1:2]) #, main="Scatterplot Example", 
          #xlab="Predicted Values ", ylab="Actual Values ")
     #p<-ggplot(combined_data) + geom_point(aes(x=combined_data[pred_name], y=combined_data[act_name])) + xlab('Predicted Values') +ylab('Actual Values')
     #print(p)
